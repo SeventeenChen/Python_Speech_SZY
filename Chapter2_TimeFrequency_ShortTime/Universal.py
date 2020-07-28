@@ -1,3 +1,4 @@
+# 通用类
 import pyaudio
 import wave
 import librosa
@@ -6,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-class soundBase:
+class Speech:
     def __init__(self, path):
         self.path = path
 
@@ -48,8 +49,8 @@ class soundBase:
     def audiowrite(self):
         pass
 
-    def audioread(self):
-        data, sample_rate = librosa.load(self.path)
+    def audioread(self, sr):
+        data, sample_rate = librosa.load(self.path, sr = sr)
         return data, sample_rate
 
     def soundplot(self, data=[], sr=22050, size=(14, 5)):

@@ -1,3 +1,4 @@
+# 窗函数（矩形、汉明、汉宁）
 import matplotlib.pyplot as plt
 import numpy as np
 
