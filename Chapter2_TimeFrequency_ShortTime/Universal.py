@@ -79,6 +79,13 @@ class Speech:
             frameout = np.multiply(frameout, np.array(win))  # 每帧乘以窗函数的值
         return frameout
 
+    def FrameTime(self, frameNum, frameLen, inc, fs):
+        """
+        分帧后计算每帧对应的时间
+        """
+        l = np.array([i for i in range(frameNum)])
+        return ((l - 1) * inc + frameLen / 2) / fs
+
 
 
 

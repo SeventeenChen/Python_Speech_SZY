@@ -5,7 +5,7 @@ from enframe import enframe
 import matplotlib.pyplot as plt
 import numpy as np
 
-def STM(x, win, inc):
+def STA(x, win, inc):
     """
     短时平均幅度函数
     :param x:
@@ -31,7 +31,7 @@ if __name__ == '__main__':
 	wlen = 200
 	win = np.hanning(wlen)
 	N = len(x)
-	Am = STM(x, win, inc)
+	Am = STA(x, win, inc)
 	Am = Am / np.max(np.abs(Am))
 	X = enframe(x, win, inc)
 	fn = X.shape[0]
