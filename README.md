@@ -3,6 +3,7 @@
 - [ ] **Updating**
 
 ## If you have any question, please don't hestiate to contact me!
+### Email: 675284835@qq.com
 
 # REFRENCE
 https://github.com/lingr7/Matlab-speech-signal-analysis-and-synthesis  
