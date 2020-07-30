@@ -1,6 +1,6 @@
 # 宋知用老师 《MATLAB在语音信号分析与合成中的应用》 Python实现版 
 
-- [ ] Updating
+- [ ] **Updating**
 
 ## If you have any question, please don't hestiate to contact me!
 
