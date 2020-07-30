@@ -2,3 +2,4 @@
 
 # REFRENCE
 https://github.com/lingr7/Matlab-speech-signal-analysis-and-synthesis
+https://github.com/busyyang/python_sound_open
