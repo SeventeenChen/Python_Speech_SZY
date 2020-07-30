@@ -32,7 +32,7 @@ if __name__ == '__main__':
     i = int(i)
     tlabel = i
 
-    plt.figure(figsize=(15, 13))
+    plt.figure(figsize=(15, 20))
     plt.subplot(4, 1, 1)
     x = [i for i in range((tlabel - 1) * inc, (tlabel - 1) * inc + wlen)]
     plt.plot(x, en[tlabel, :])
