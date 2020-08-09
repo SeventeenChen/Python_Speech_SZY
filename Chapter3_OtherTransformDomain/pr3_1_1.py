@@ -1,5 +1,6 @@
 # 同态滤波解卷
 
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -72,7 +73,7 @@ if __name__ == '__main__':
 	fig = plt.figure(figsize=(15, 18))
 	plt.subplot(2, 1, 1)
 	plt.plot(freq[0 : int(N/2)], lceps[0 : int(N/2)], label = 'Log Spectrum')
-	plt.plot(freq[0 : int(N/2)], ST[0 : int(N/2)], linewidth = 3 ,label = 'Sound Track Impluse Response Spectrum')
+	plt.plot(freq[0 : int(N/2)], ST[0 : int(N/2)], linewidth = 4 ,label = 'Sound Track Impluse Response Spectrum')
 	plt.legend(loc = 'upper right')
 	plt.ylim([-4, 5])
 	plt.grid()

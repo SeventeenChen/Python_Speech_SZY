@@ -1,7 +1,6 @@
 # Spectrogram 语谱图
 
 from Universal import *
-from enframe import enframe
 import matplotlib.pyplot as plt
 import numpy as np
 
