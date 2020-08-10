@@ -8,10 +8,8 @@ import matplotlib.pyplot as plt
 
 
 class Speech:
-    def __init__(self, path):
-        self.path = path
 
-    def audiorecorder(self, len=2, formater=pyaudio.paInt16, rate=16000, frames_per_buffer=1024, channels=2):
+    def audiorecorder(self, path, len=2, formater=pyaudio.paInt16, rate=16000, frames_per_buffer=1024, channels=2):
         p = pyaudio.PyAudio()
         stream = p.open(format=formater, channels=channels, rate=rate, input=True, frames_per_buffer=frames_per_buffer)
         print("start recording......")
@@ -23,14 +21,14 @@ class Speech:
         stream.stop_stream()
         stream.close()
         p.terminate()
-        wf = wave.open(self.path, 'wb')
+        wf = wave.open(path, 'wb')
         wf.setnchannels(channels)
         wf.setsampwidth(p.get_sample_size(formater))
         wf.setframerate(rate)
         wf.writeframes(b''.join(frames))
         wf.close()
 
-    def audioplayer(self, frames_per_buffer=1024):
+    def audioplayer(self, path, frames_per_buffer=1024):
         wf = wave.open(self.path, 'rb')
         p = pyaudio.PyAudio()
         stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
@@ -49,8 +47,8 @@ class Speech:
     def audiowrite(self):
         pass
 
-    def audioread(self, sr):
-        data, sample_rate = librosa.load(self.path, sr = sr)
+    def audioread(self, path, sr):
+        data, sample_rate = librosa.load(path, sr = sr)
         return data, sample_rate
 
     def soundplot(self, data=[], sr=22050, size=(14, 5)):
@@ -61,6 +59,7 @@ class Speech:
         plt.show()
 
     def enframe(self, x, win, inc=None):
+        # print(x)
         nx = len(x)
         if isinstance(win, list):
             nwin = len(win)
