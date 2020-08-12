@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
 
 	# figure
-	plt.figure(1, dpi=600)
+	plt.figure(1, figsize=(18, 15), dpi=600)
 	plt.subplot(5, 1, 1)
 	plt.plot(x)
 	plt.autoscale(enable=True, tight=True)
@@ -68,9 +68,10 @@ if __name__ == '__main__':
 		plt.plot(y[i * 2 -2, :])
 		plt.autoscale(enable=True, tight=True)
 		plt.ylabel('y' + str(i*2 +2))
+	plt.savefig('images/bark1.png')
 	plt.show()
 
-	plt.figure(2, dpi=600)
+	plt.figure(2, figsize=(18, 15), dpi=600)
 	for i in range(4):
 		plt.subplot(5, 2, 2 * i + 1)
 		plt.plot(y[i * 2 + 8, :])
@@ -84,6 +85,7 @@ if __name__ == '__main__':
 	plt.plot(y[16, :])
 	plt.autoscale(enable=True, tight=True)
 	plt.ylabel('y17')
+	plt.savefig('images/bark2.png')
 	plt.show()
 
 
