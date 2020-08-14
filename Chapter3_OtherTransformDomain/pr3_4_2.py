@@ -12,7 +12,7 @@ if __name__ == '__main__':
 	N = len(x)
 	n = 5	# decomposition level
 	T = pywt.WaveletPacket(data = x, wavelet = 'db2', maxlevel = n, mode='zero')		# 一维小波包分解
-	new_wp = pywt.WaveletPacket(data=None, wavelet='db2', mode='zero')
+	new_wp = pywt.WaveletPacket(data=np.zeros(len(x)), wavelet='db2', mode='zero')
 
 
 	# 计算各节点对应系数
@@ -29,29 +29,29 @@ if __name__ == '__main__':
 	y = np.zeros((17, N))
 	for i in range(8):
 		new_wp[NodeName[4][i]] = map[4][i]
-		y[i, :] = new_wp.reconstruct(update=False)[0 : N]
-		new_wp = pywt.WaveletPacket(data=None, wavelet='db2', mode='zero')
+		y[i, :] = new_wp.reconstruct(update=False)
+		new_wp = pywt.WaveletPacket(data=np.zeros(len(x)), wavelet='db2', mode='zero')
 
 	new_wp[NodeName[3][4]] = map[3][4]
-	y[8, :] = new_wp.reconstruct(update=False)[0 : N]
-	new_wp = pywt.WaveletPacket(data=None, wavelet='db2', mode='zero')
+	y[8, :] = new_wp.reconstruct(update=False)
+	new_wp = pywt.WaveletPacket(data=np.zeros(len(x)), wavelet='db2', mode='zero')
 	new_wp[NodeName[3][5]] = map[3][5]
-	y[9, :] = new_wp.reconstruct(update=False)[0 : N]
-	new_wp = pywt.WaveletPacket(data=None, wavelet='db2', mode='zero')
+	y[9, :] = new_wp.reconstruct(update=False)
+	new_wp = pywt.WaveletPacket(data=np.zeros(len(x)), wavelet='db2', mode='zero')
 	new_wp[NodeName[4][11]] = map[4][11]
-	y[10, :] = new_wp.reconstruct(update=False)[0 : N]
-	new_wp = pywt.WaveletPacket(data=None, wavelet='db2', mode='zero')
+	y[10, :] = new_wp.reconstruct(update=False)
+	new_wp = pywt.WaveletPacket(data=np.zeros(len(x)), wavelet='db2', mode='zero')
 	new_wp[NodeName[4][12]] = map[4][12]
-	y[11, :] = new_wp.reconstruct(update=False)[0 : N]
-	new_wp = pywt.WaveletPacket(data=None, wavelet='db2', mode='zero')
+	y[11, :] = new_wp.reconstruct(update=False)
+	new_wp = pywt.WaveletPacket(data=np.zeros(len(x)), wavelet='db2', mode='zero')
 	new_wp[NodeName[3][7]] = map[3][7]
-	y[12, :] = new_wp.reconstruct(update=False)[0 : N]
-	new_wp = pywt.WaveletPacket(data=None, wavelet='db2', mode='zero')
+	y[12, :] = new_wp.reconstruct(update=False)
+	new_wp = pywt.WaveletPacket(data=np.zeros(len(x)), wavelet='db2', mode='zero')
 
 	for i in range(4, 8):
 		new_wp[NodeName[2][i]] = map[2][i]
-		y[9 + i, :] = new_wp.reconstruct(update=False)[0: N]
-		new_wp = pywt.WaveletPacket(data=None, wavelet='db2', mode='zero')
+		y[9 + i, :] = new_wp.reconstruct(update=False)
+		new_wp = pywt.WaveletPacket(data=np.zeros(len(x)), wavelet='db2', mode='zero')
 
 
 	# figure
