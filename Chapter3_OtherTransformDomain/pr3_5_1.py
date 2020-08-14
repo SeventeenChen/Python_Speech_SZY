@@ -14,7 +14,7 @@ if __name__ == '__main__':
 	x1 = np.sin(2 * math.pi * 50 * t1)
 	x2 = np.sin(2 * math.pi * 150 * t1) / 3
 	z = x1 + x2
-	IMF = EMD().emd(z, t1, max_imf=2)
+	IMF = EMD().emd(z, t1)
 	m, n = IMF.shape
 
 	# figure
