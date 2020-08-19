@@ -14,7 +14,7 @@ def lpcar2zz(ar):
 	:return:
 	"""
 	ar = np.array(ar)
-	ar0 = ar.reshape(-1, 1)
+	ar0 = ar.reshape(1, -1)
 	nf, p1 = ar0.shape
 	zz = np.zeros((nf, p1-1), dtype=complex)
 	for k in range(nf):
