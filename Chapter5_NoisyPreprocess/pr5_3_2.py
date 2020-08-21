@@ -55,9 +55,10 @@ if __name__ == '__main__':
     time = np.linspace(0, N - 1, num = N) / fs
     
     # figure
-    plt.figure(figsize=(16, 24))
+    plt.figure(figsize=(16, 28))
     plt.subplot(4, 1, 1)
     plt.plot(time, s)
+    plt.xlabel('Time [s]')
     plt.ylabel('Amplitude')
     plt.title('Clean Speech Siganl')
     
@@ -75,7 +76,7 @@ if __name__ == '__main__':
         print('k = {}, snr = {}, snr1 = {:.2f}\n'.format(k+1, snr, snr1))
         plt.title('Noisy Speech Siganl \nSNR = {} dB, calculating SNR = {:.2} dB'.format(snr, np.round(snr1 * 1000/ 1000)))
     
-    # plt.savefig('images/add_noisedata.png', bbox_inches='tight', dpi=600)
+    plt.savefig('images/add_noisedata.png', bbox_inches='tight', dpi=600)
     plt.show()
     
     
