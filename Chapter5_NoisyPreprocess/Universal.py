@@ -83,7 +83,7 @@ class Speech:
         分帧后计算每帧对应的时间
         """
         l = np.array([i for i in range(frameNum)])
-        return ((l - 1) * inc + frameLen / 2) / fs
+        return (l * inc + frameLen / 2) / fs
 
 
 
