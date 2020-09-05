@@ -85,6 +85,20 @@ class Speech:
         l = np.array([i for i in range(frameNum)])
         return (l * inc + frameLen / 2) / fs
 
+    def SNR_singlech(self, I, In):
+        """
+		calculate SNR of noisy speech signal
+		:param I: clean speech siganl
+		:param In: noisy speech siganl
+		:return snr:
+		"""
+    
+        Ps = np.sum((I - np.mean(I)) ** 2)  # signal power
+        Pn = np.sum((I - In) ** 2)  # noise power
+        snr = 10 * np.log10(Ps / Pn)
+    
+        return snr
+
 
 
 
