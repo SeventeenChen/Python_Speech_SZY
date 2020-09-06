@@ -57,7 +57,7 @@ if __name__ == '__main__':
 	plt.plot(w / math.pi * Fs2, db, 'k', linewidth=2)
 	plt.grid()
 	plt.axis([0, 150, -100, 10])
-	plt.title('Amplitude Response Curve')
+	plt.title('Amplitude Frequency Response')
 	plt.xlabel('Frequency [Hz]')
 	plt.ylabel('Amplitude [dB]')
 	plt.savefig('images/FIR_Filter.png', bbox_inches='tight', dpi=600)
