@@ -197,7 +197,7 @@ if __name__ == '__main__':
 		print('k = {}, begin = {}, end = {}, duration = {}'.format(k + 1, nx1, nx2, nx3))
 		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([-1.5, 1.5]), 'k', linewidth=2)
 		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([-1.5, 1.5]), 'k--', linewidth=2)
-	# plt.savefig('images/EndpointDetection.png', bbox_inches='tight', dpi=600)
+	
 	
 	plt.subplot(2, 1, 2)
 	plt.plot(time, x)
@@ -205,4 +205,5 @@ if __name__ == '__main__':
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
 	plt.title('Noisy Speech SNR = 20dB')
+	plt.savefig('images/vad_ezr.png', bbox_inches='tight', dpi=600)
 	plt.show()
