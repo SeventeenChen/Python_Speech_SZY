@@ -1,7 +1,7 @@
 #pr6_1_1
 
 from Universal import *
-import statistics
+from VAD import *
 
 def vad_ezm1(x, wlen, inc, NIS):
 	"""
@@ -26,9 +26,10 @@ def vad_ezm1(x, wlen, inc, NIS):
 	y = speech.enframe(x, wlen, inc).T      # enframe
 	fn = y.shape[1]                         # frame number
 	amp = np.sum(y ** 2, axis = 0)                    # short-term average energy
-	zcr = zc2(y, fn)                        # short-term average zero-cross
-	ampth = statistics.mean(amp[0 : NIS])           # non-speech segment energy
-	zcrth = statistics.mean(zcr[0 : NIS])           # non-speech segment zero-cross
+	vad = VAD()
+	zcr = vad.zc2(y, fn)                        # short-term average zero-cross
+	ampth = np.mean(amp[0 : NIS])           # non-speech segment energy
+	zcrth = np.mean(zcr[0 : NIS])           # non-speech segment zero-cross
 	amp2 = 2 * ampth
 	amp1 = 4 * ampth                        # energy threshold
 	zcr2 = 2 * zcrth                        # zreo-cross threshold
@@ -89,71 +90,12 @@ def vad_ezm1(x, wlen, inc, NIS):
 		NF[(x1[i] - 1) : x2[i]] = 0
 	
 	SpeechIndex = np.where(SF==1)       # voice segemnt
-	voiceseg = findSegemnt(SpeechIndex)
+	voiceseg = vad.findSegemnt(SpeechIndex)
 	vsl = len(voiceseg)
 	
 	return voiceseg, vsl, SF, NF
 	
-def zc2(y, fn):
-	"""
-	short-term average zero-cross
-	:param y: signal
-	:param fn: frame number
-	:return zcr: zero-cross
-	"""
-	if y.shape[1] != fn:
-		y = y.T
-	
-	wlen = y.shape[0]           # frame length
-	zcr = np.zeros(fn)       # initialization
-	delta = 0.01                # small threshold
-	
-	
-	for i in range(fn):
-		yn = y[:, i]
-		ym = np.zeros(len(yn))
-		for k in range(wlen):
-			if yn[k] >= delta:
-				ym[k] = yn[k] - delta
-			elif yn[k] < -delta:
-				ym[k] = yn[k] + delta
-			else:
-				ym[k] = 0
-			
-		zcr[i] = np.sum(ym[0 : -1] * ym[1 : len(ym)] < 0)
-	
-	return zcr
 
-def findSegemnt(express):
-	"""
-	find voice start, end and length
-	:param express: speech index
-	:return soundSegment:
-	"""
-	express = express[0]
-	if express[0] == 0:             # find where express = 1
-		voiceIndex = np.where(express)
-	else:
-		voiceIndex = express
-	
-	soundSegment = {}
-	soundSegment.setdefault('begin', []).append(voiceIndex[0])
-	k = 1
-	
-	for i in range(len(voiceIndex) - 1):
-		if voiceIndex[i + 1] - voiceIndex[i] > 1:
-			soundSegment.setdefault('end', []).append(voiceIndex[i])
-			soundSegment.setdefault('begin', []).append(voiceIndex[i+1])
-			k = k + 1
-		
-	soundSegment.setdefault('end',[]).append(voiceIndex[-1])
-	
-	for i in range(k):
-		duration = soundSegment['end'][i] - soundSegment['begin'][i] + 1
-		soundSegment.setdefault('duration', []).append(duration)
-	
-	return soundSegment
-	
 	
 	
 
@@ -189,5 +131,5 @@ if __name__ == '__main__':
 		print('k = {}, begin = {}, end = {}, duration = {}'.format(k + 1, nx1, nx2, nx3))
 		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([-1.5, 1.5]), 'k', linewidth = 2)
 		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([-1.5, 1.5]), 'k--', linewidth = 2)
-	plt.savefig('images/EndpointDetection.png', bbox_inches='tight', dpi=600)
+	# plt.savefig('images/EndpointDetection.png', bbox_inches='tight', dpi=600)
 	plt.show()

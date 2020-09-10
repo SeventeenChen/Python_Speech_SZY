@@ -1,15 +1,15 @@
 #
-# pr6_2_1
+# pr6_2_2_smoothing
 
 from Universal import *
 from Noisy import *
 from VAD import *
+from scipy.signal import medfilt
 
-
-
-def vad_ezr(x, wlen, inc, NIS):
+def vad_ezrm(x, wlen, inc, NIS):
 	"""
-	Speech Endpoint Detection using Short-term average energy & Short-term average zero-crossing
+	 Smoothing Processing
+	 Speech Endpoint Detection using Short-term average energy & Short-term average zero-crossing
 	:param x: signal
 	:param wlen: frame length
 	:param inc: frame shift
@@ -32,10 +32,12 @@ def vad_ezr(x, wlen, inc, NIS):
 	amp = np.sum(y ** 2, axis=0)  # short-term average energy
 	vad = VAD()
 	zcr = vad.zc2(y, fn)  # short-term average zero-cross
-	ampth = statistics.mean(amp[0: NIS])  # non-speech segment energy
-	zcrth = statistics.mean(zcr[0: NIS])  # non-speech segment zero-cross
-	amp2 = 2 * ampth
-	amp1 = 4 * ampth  # energy threshold
+	ampm = multimidfilter(amp, 5)   # medfilter smoothing
+	zcrm = multimidfilter(zcr, 5)
+	ampth = np.mean(ampm[0: NIS])  # non-speech segment energy
+	zcrth = np.mean(zcrm[0: NIS])  # non-speech segment zero-cross
+	amp2 = 1.2 * ampth
+	amp1 = 1.5 * ampth  # energy threshold
 	zcr2 = 0.8 * zcrth  # zreo-cross threshold
 	
 	# Endpoint Detection
@@ -43,7 +45,6 @@ def vad_ezr(x, wlen, inc, NIS):
 	x1 = [0]
 	x2 = [0]
 	for n in range(fn):
-		print('n = {}, amp = {:.4f}, zcr = {}'.format(n + 1, amp[n], zcr[n]))
 		if status == 0 or status == 1:  # 0:silence, 1: maybe start
 			if amp[n] > amp1:
 				x1[xn] = np.max([n - count[xn], 1])
@@ -79,8 +80,6 @@ def vad_ezr(x, wlen, inc, NIS):
 			silence.append(0)
 			x1.append(0)
 			x2.append(0)
-		
-		print('status = {} \n'.format(status))
 	
 	el = len(x1)
 	if x1[el - 1] == 0:
@@ -102,7 +101,22 @@ def vad_ezr(x, wlen, inc, NIS):
 	
 	return voiceseg, vsl, SF, NF
 
-
+def multimidfilter(x, m):
+	"""
+	Multiple calls medfilt
+	:param x: signal
+	:param m: call times
+	:return y:
+	"""
+	a = x
+	for k in range(m):
+		b = medfilt(a, 5)
+		a = b
+		
+	y = a
+	
+	return y
+	
 
 if __name__ == '__main__':
 	S = Speech()
@@ -111,7 +125,8 @@ if __name__ == '__main__':
 	N = len(xx)
 	time = np.arange(N) / fs
 	noisy = Noisy()
-	x, _ = noisy.Gnoisegen(xx, 20)
+	SNR = 10
+	x, _ = noisy.Gnoisegen(xx, SNR)
 	
 	wlen = 200
 	inc = 80  # enframe
@@ -121,7 +136,7 @@ if __name__ == '__main__':
 	fn = int((N - wlen) / inc) + 1
 	frameTime = S.FrameTime(fn, wlen, inc, fs)
 	
-	voiceseg, vsl, SF, NF = vad_ezr(x, wlen, inc, NIS)
+	voiceseg, vsl, SF, NF = vad_ezrm(x, wlen, inc, NIS)
 	
 	# figure
 	plt.figure(figsize=(16, 9))
@@ -131,7 +146,7 @@ if __name__ == '__main__':
 	plt.xlabel('Time [s]')
 	plt.axis([0, np.max(time), -1, 1])
 	plt.title('Endpoint Detection')
-	
+
 	for k in range(vsl):
 		nx1 = voiceseg['begin'][k]
 		nx2 = voiceseg['end'][k]
@@ -139,13 +154,12 @@ if __name__ == '__main__':
 		print('k = {}, begin = {}, end = {}, duration = {}'.format(k + 1, nx1, nx2, nx3))
 		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([-1.5, 1.5]), 'k', linewidth=2)
 		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([-1.5, 1.5]), 'k--', linewidth=2)
-	
-	
+
 	plt.subplot(2, 1, 2)
 	plt.plot(time, x)
 	plt.axis([0, max(time), -1, 1])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
-	plt.title('Noisy Speech SNR = 20dB')
-	# plt.savefig('images/vad_ezr.png', bbox_inches='tight', dpi=600)
+	plt.title('Noisy Speech SNR = 10dB')
+	plt.savefig('images/vad_ezrm.png', bbox_inches='tight', dpi=600)
 	plt.show()
