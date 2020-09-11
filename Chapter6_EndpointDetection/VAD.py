@@ -1,6 +1,7 @@
 # class Vad
 
 import numpy as np
+from scipy.signal import medfilt
 
 class VAD:
 	def zc2(self, y, fn):
@@ -62,3 +63,18 @@ class VAD:
 		
 		return soundSegment
 	
+	def multimidfilter(self, x, m):
+		"""
+		Multiple calls medfilt
+		:param x: signal
+		:param m: call times
+		:return y:
+		"""
+		a = x
+		for k in range(m):
+			b = medfilt(a, 5)
+			a = b
+		
+		y = a
+		
+		return y
