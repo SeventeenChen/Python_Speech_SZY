@@ -2,7 +2,7 @@
 
 - [ ] **Updating**
 
-## If you have any question, please don't hestiate to contact me!
+## For any question, please don't hestiate to contact me!
 ### Email: 675284835@qq.com
 
 # REFRENCE
