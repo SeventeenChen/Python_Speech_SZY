@@ -1,12 +1,9 @@
 #
-# pr6_3_4
-
+# pr6_3_5
 
 from Universal import *
 from Noisy import *
 from VAD import *
-
-
 
 if __name__ == '__main__':
 	# Set_I
@@ -32,20 +29,27 @@ if __name__ == '__main__':
 	fn = y.shape[1]  # frame number
 	frameTime = speech.FrameTime(fn, wlen, inc, fs)  # frame to time
 	
-	R1 = np.zeros(fn)
-	for k in range(1, fn):
+	Rw = np.zeros(2 * wlen - 1)
+	for k in range(NIS):
 		u = y[:, k]  # one frame
 		ru = np.correlate(u, u, 'full')  # self-correlate
-		ru0 = ru[wlen - 1]
-		ru1 = np.max(ru[wlen + 16 : wlen + 133])        # first secondary peak
-		R1[k] = ru0 / ru1
+		Rw = Rw + ru
+	Rw = Rw / NIS
+	Rw2 = np.sum(Rw ** 2)
+	
+	Ru = np.zeros(fn)
+	for k in range(fn):
+		u = y[:, k]  # one frame
+		ru = np.correlate(u, u, 'full')  # self-correlate
+		Cm = np.sum(ru * Rw)
+		Cru = np.sum(ru * ru)
+		Ru[k] = Cm / np.sqrt(Rw2 * Cru)
 	
 	vad = VAD()
-	Rum = vad.multimidfilter(R1, 20)  # smoothing
-	Rum = Rum / np.max(Rum)  # normalized
-	thredth = np.max(Rum[0: NIS])  # threshold
-	T1 = 0.95 * thredth
-	T2 = 0.75 * thredth
+	Rum = vad.multimidfilter(Ru, 10)  # smoothing
+	alphath = np.mean(Rum[0: NIS])  # threshold
+	T1 = 0.9 * alphath
+	T2 = 0.8 * alphath
 	voiceseg, vsl, SF, NF = vad.vad_param1D_revr(Rum, T1, T2)
 	
 	# figure
@@ -79,10 +83,10 @@ if __name__ == '__main__':
 		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([0, 1.2]), 'k', linewidth=1)
 		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([0, 1.2]), 'k--', linewidth=1)
 	plt.grid()
-	plt.axis([0, np.max(time), 0, 1.2])
+	plt.axis([0, np.max(time), 0, 1])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
-	plt.title('Short-term Auto-correlation Primary and Secondary Peak Ratio')
-	plt.savefig('images/vad_ratio_self_corr.png', bbox_inches='tight', dpi=600)
+	plt.title('Cosine Angle of Short-term Auto-correlation')
+	plt.savefig('images/vad_cos_corr.png', bbox_inches='tight', dpi=600)
 	plt.show()
 
