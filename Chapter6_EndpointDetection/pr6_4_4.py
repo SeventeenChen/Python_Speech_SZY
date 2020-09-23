@@ -19,7 +19,7 @@ def wavlet_barkms(x,wname,fs):
 		return
 	y = np.zeros((17, len(x)))
 	n = 5  # decomposition level
-	T = WaveletPacket(data=x, wavelet='db2', maxlevel=n, mode='zero')  # 一维小波包分解
+	T = WaveletPacket(data=x, wavelet=wname, maxlevel=n, mode='zero')  # 一维小波包分解
 	new_wp = WaveletPacket(data=np.zeros(len(x)), wavelet='db2', mode='zero')
 	
 	# 计算各节点对应系数
