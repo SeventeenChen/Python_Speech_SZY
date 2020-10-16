@@ -1,9 +1,6 @@
 #
 # pr6_7_1
 
-#
-# pr6_6_1
-
 from Universal import *
 from Noisy import *
 from VAD import *
