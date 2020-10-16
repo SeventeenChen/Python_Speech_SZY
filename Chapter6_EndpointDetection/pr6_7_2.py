@@ -77,8 +77,8 @@ if __name__ == '__main__':
 	bottom = eth - 0.1 * Det
 	plt.axis([0, np.max(time), bottom, top])
 	plt.xlabel('Time [s]')
-	plt.ylabel('Spectral Entropy')
-	plt.title('Energy Entropy Ratio')
+	plt.ylabel('Energy Entropy Ratio')
+	plt.title('Short Term Energy Entropy Ratio')
 	for k in range(vsl):
 		nx1 = voiceseg['begin'][k]
 		nx2 = voiceseg['end'][k]
