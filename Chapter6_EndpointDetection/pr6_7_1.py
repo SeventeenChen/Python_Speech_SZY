@@ -67,8 +67,8 @@ if __name__ == '__main__':
 	plt.plot(frameTime, Ecrm)
 	plt.axis([0, np.max(time), 0, 1.2 * np.max(Ecrm)])
 	plt.xlabel('Time [s]')
-	plt.ylabel('Spectral Entropy')
-	plt.title('Energy Zero-crossing Ratio')
+	plt.ylabel('Energy Zero-crossing Ratio')
+	plt.title('Short Term Energy Zero-crossing Ratio')
 	for k in range(vsl):
 		nx1 = voiceseg['begin'][k]
 		nx2 = voiceseg['end'][k]
