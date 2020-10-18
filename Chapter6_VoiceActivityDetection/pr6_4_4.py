@@ -1,10 +1,12 @@
-#
+# Wavelet Packet Short-term BARK Subband Variance
 # pr6_4_4
 
-from Universal import *
-from Noisy import *
-from VAD import *
 from pywt import WaveletPacket
+
+from Noisy import *
+from Universal import *
+from VAD import *
+
 
 def wavlet_barkms(x,wname,fs):
 	"""

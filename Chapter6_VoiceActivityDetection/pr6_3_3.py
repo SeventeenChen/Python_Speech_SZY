@@ -1,12 +1,11 @@
-#
-# pr6_3_4
+# Short-Term Normalized Self-Correlation
+# pr6_3_3
 
+from scipy.signal import butter, buttord, filtfilt
 
-from Universal import *
 from Noisy import *
+from Universal import *
 from VAD import *
-
-
 
 if __name__ == '__main__':
 	# Set_I
@@ -32,21 +31,23 @@ if __name__ == '__main__':
 	fn = y.shape[1]  # frame number
 	frameTime = speech.FrameTime(fn, wlen, inc, fs)  # frame to time
 	
-	R1 = np.zeros(fn)
+	n, Wn = buttord(300 / (fs / 2), 600 / (fs / 2), 3, 20)      # filter order, bandwidth
+	b, a = butter(n, Wn)                                        # digital filter coefficient
+	Ru = np.zeros(fn)
 	for k in range(1, fn):
-		u = y[:, k]  # one frame
-		ru = np.correlate(u, u, 'full')  # self-correlate
-		ru0 = ru[wlen - 1]
-		ru1 = np.max(ru[wlen + 16 : wlen + 133])        # first secondary peak
-		R1[k] = ru0 / ru1
+		u = y[:, k]                                 # one frame
+		ru = np.correlate(u, u, 'full')             # self-correlate
+		rnu = ru / np.max(ru)                       # normalized
+		rpu = filtfilt(b, a, rnu)                   # digital filter
+		Ru[k] = np.max(rpu)
 	
 	vad = VAD()
-	Rum = vad.multimidfilter(R1, 20)  # smoothing
+	Rum = vad.multimidfilter(Ru, 10)  # smoothing
 	Rum = Rum / np.max(Rum)  # normalized
 	thredth = np.max(Rum[0: NIS])  # threshold
-	T1 = 0.95 * thredth
-	T2 = 0.75 * thredth
-	voiceseg, vsl, SF, NF = vad.vad_param1D_revr(Rum, T1, T2)
+	T1 = 1.1 * thredth
+	T2 = 1.3 * thredth
+	voiceseg, vsl, SF, NF = vad.vad_param1D(Rum, T1, T2)
 	
 	# figure
 	plt.figure(figsize=(9, 16))
@@ -79,10 +80,10 @@ if __name__ == '__main__':
 		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([0, 1.2]), 'k', linewidth=1)
 		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([0, 1.2]), 'k--', linewidth=1)
 	plt.grid()
-	plt.axis([0, np.max(time), 0, 1.2])
+	plt.axis([0, np.max(time), -0.05, 1.2])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
-	plt.title('Short-term Auto-correlation Primary and Secondary Peak Ratio')
-	plt.savefig('images/vad_ratio_self_corr.png', bbox_inches='tight', dpi=600)
+	plt.title('Short-Term Normalized Self-Correlation')
+	plt.savefig('images/vad_normalized_self_corr.png', bbox_inches='tight', dpi=600)
 	plt.show()
-
+	

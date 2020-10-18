@@ -1,8 +1,8 @@
-#
-# pr6_7_2
+# Short-term Modified Sub-band Spectral Entropy
+# pr6_6_1
 
-from Universal import *
 from Noisy import *
+from Universal import *
 from VAD import *
 
 if __name__ == '__main__':
@@ -29,27 +29,36 @@ if __name__ == '__main__':
 	fn = y.shape[1]  # frame number
 	frameTime = speech.FrameTime(fn, wlen, inc, fs)  # frame to time
 	
-	aparam = 2                                                  # parameter of energy
-	Esum = np.zeros(fn)
-	H = np.zeros(fn)
-	Ef = np.zeros(fn)
+	df = fs / wlen                          # FFT frequency resolution
+	fx1 = int(250 / df) + 1              # 250Hz and 3500Hz
+	fx2 = int(3500 / df) + 1
+	km = int(np.floor(wlen / 8))                 # sub-band number
+	K = 0.5                                 # constant
+	Eb = np.zeros(km)
+	Hb = np.zeros(fn)
 	for i in range(fn):
-		S = np.abs(np.fft.fft(y[:, i]))                         # FFT
-		Sp = S[0 : int(wlen / 2 + 1)]                           # positive frequency
-		Esum[i] = np.log10(1 + np.sum(Sp ** 2) / aparam)        # log energy
-		prob = Sp / np.sum(Sp)                                  # probability
+		A = np.abs(np.fft.fft(y[:, i]))     # one frame FFT amplitude
+		E = np.zeros(int(wlen/2) + 1)
+		E[fx1 : fx2] = A[fx1 : fx2]         # only in 250 ~ 3500Hz
+		E = E ** 2                          # energy
+		P1 = E / np.sum(E)                  # normalization
+		index = np.where(P1 >= 0.9)         # probability >= 0.9?
+		if index:
+			E[index] = 0
+		for m in range(km):
+			Eb[m] = np.sum(E[4 * m - 1 : 4 * m])
+		prob = (Eb + K) / np.sum(Eb + K)    # sub-band probability
 		EPS = np.finfo(float).eps
-		H[i] = -np.sum(prob * np.log(prob + EPS))               # spectral entropy
-		Ef[i] = np.sqrt(1 + np.abs(Esum[i] / H[i]))             # energy entropy ratio
-	
+		Hb[i] = - np.sum(prob * np.log10(prob + EPS))  # spectral entropy
+		
 	Vad = VAD()
-	Enm = Vad.multimidfilter(Ef, 10)                            # smoothing
-	Me = np.max(Enm)
-	eth = np.mean(Enm[0 : NIS])
-	Det = Me - eth                                              # threshold
-	T1 = 0.05 * Det + eth
-	T2 = 0.1 * Det + eth
-	[voiceseg, vsl, SF, NF] = Vad.vad_param1D(Enm, T1, T2)  # vad in ecr with 2 thresholds
+	Enm = Vad.multimidfilter(Hb, 10)  # smoothing
+	Me = np.min(Enm)
+	eth = np.max(Enm[0: NIS])
+	Det = eth - Me
+	T1 = 0.99 * Det + Me
+	T2 = 0.96 * Det + Me
+	[voiceseg, vsl, SF, NF] = Vad.vad_param1D_revr(Enm, T1, T2)
 	
 	# figure
 	plt.figure(figsize=(9, 16))
@@ -73,18 +82,18 @@ if __name__ == '__main__':
 	plt.title('Noisy Speech Signal SNR = {}dB'.format(SNR))
 	plt.subplot(3, 1, 3)
 	plt.plot(frameTime, Enm)
-	top = Det * 1.1 + eth
-	bottom = eth - 0.1 * Det
-	plt.axis([0, np.max(time), bottom, top])
+	top = 1.1 * Det + Me
+	botton = Me - 0.1 * Det
+	plt.axis([0, np.max(time), botton, top])
 	plt.xlabel('Time [s]')
-	plt.ylabel('Energy Entropy Ratio')
-	plt.title('Short Term Energy Entropy Ratio')
+	plt.ylabel('Spectral Entropy')
+	plt.title('Short-term Modified Sub-band Spectral Entropy')
 	for k in range(vsl):
 		nx1 = voiceseg['begin'][k]
 		nx2 = voiceseg['end'][k]
-		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([bottom, top]), 'k', linewidth=1)
-		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([bottom, top]), 'k--', linewidth=1)
+		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([botton, top]), 'k', linewidth=1)
+		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([botton, top]), 'k--', linewidth=1)
 		plt.plot(np.array([0, np.max(time)]), np.array([T1, T1]), 'b', linewidth=1)
 		plt.plot(np.array([0, np.max(time)]), np.array([T2, T2]), 'r--', linewidth=1)
-	plt.savefig('images/vad_energy_entropy_ratio.png', bbox_inches='tight', dpi=600)
+	plt.savefig('images/vad_sub-band_spectral_entropy.png', bbox_inches='tight', dpi=600)
 	plt.show()

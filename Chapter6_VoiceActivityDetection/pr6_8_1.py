@@ -1,10 +1,12 @@
-#
+# Mean amplitude product of wavelet decomposition short time coefficients
 # pr6_8_1
 
-from Universal import *
-from Noisy import *
-from VAD import *
 import pywt
+
+from Noisy import *
+from Universal import *
+from VAD import *
+
 
 def mwavdec(data, wavelet, level):
 	"""

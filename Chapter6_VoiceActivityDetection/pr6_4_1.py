@@ -1,11 +1,9 @@
-#
-# pr6_4_3
+# Short-time Frequency Band Variance
+# pr6_4_1
 
-from Universal import *
 from Noisy import *
+from Universal import *
 from VAD import *
-from scipy.io import loadmat
-from scipy.signal import resample
 
 if __name__ == '__main__':
 	# Set_I
@@ -31,40 +29,17 @@ if __name__ == '__main__':
 	fn = y.shape[1]  # frame number
 	frameTime = speech.FrameTime(fn, wlen, inc, fs)  # frame to time
 	
-	# Bark sub-band
-	Fk = loadmat('Fk.mat')['Fk']
-	
-	# interpolation
-	fs2 = int(fs/2)
-	y = y.T
-	sourfft = np.zeros((fn, wlen), dtype=complex)
-	sourfft1 = np.zeros((fn, int(wlen / 2)))
-	sourre = np.zeros((fn, int(fs / 2)))
-	for i in range(fn):
-		sourfft[i, :] = np.fft.fft(y[i, :], wlen)                   # FFT
-		sourfft1[i, :] = np.abs(sourfft[i, 0 : int(wlen / 2)])      # positive frequency
-		sourre[i, :] = resample(sourfft1[i, :], fs2)  # spectral line interpolation
-		
-	# Bask filter number
-	for k in range(25):
-		if Fk[k, 2] > fs2:
-			break
-	
-	num = k
-	Dst = np.zeros(num)
+	Y = np.fft.fft(y, axis = 0)           # FFT
+	N2 = int(wlen / 2 + 1)      # positive frequency
+	n2 = np.arange(N2)
+	Y_abs = np.abs(Y[n2, :])    # amplitude
 	Dvar = np.zeros(fn)
-	for i in range(fn):
-		Sr = sourre[i, :]                   # one frame
-		for k in range(num):
-			m1 = Fk[k, 1]
-			m2 = Fk[k, 2]                   # Bask filter cutoff frequency
-			Srt = Sr[m1: m2]                # frequency line
-			Dst[k] = np.var(Srt)
-		Dvar[i] = np.mean(Dst)
+	eps = np.finfo(float).eps
+	for k in range(fn):         # frequency band variance in each frame
+		Dvar[k] = np.var(Y_abs[:, k]) + eps
+	dth = np.mean(Dvar[0 : NIS])
 	
 	vad = VAD()
-	Dvarm = vad.multimidfilter(Dvar, 10)    # smoothing
-	dth = np.mean(Dvarm[0 : NIS])           # threshold
 	T1 = 1.5 * dth
 	T2 = 3 * dth
 	voiceseg, vsl, SF, NF = vad.vad_param1D(Dvar, T1, T2)
@@ -93,18 +68,16 @@ if __name__ == '__main__':
 	plt.title('Noisy Speech Signal SNR = {}dB'.format(SNR))
 	plt.subplot(3, 1, 3)
 	plt.plot(frameTime, Dvar)
-	plt.plot(np.array([0, np.max(time)]), np.array([T1, T1]), 'b', linewidth=0.5)
-	plt.plot(np.array([0, np.max(time)]), np.array([T2, T2]), 'r--', linewidth=0.5)
+	
 	for k in range(vsl):
 		nx1 = voiceseg['begin'][k]
 		nx2 = voiceseg['end'][k]
 		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([0, 1.2 * np.max(Dvar)]), 'k', linewidth=1)
 		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([0, 1.2 * np.max(Dvar)]), 'k--', linewidth=1)
 	plt.grid()
-	plt.axis([0, np.max(time), -0.1, 1.2 * np.max(Dvar)])
+	plt.axis([0, np.max(time), 0, 1.2 * np.max(Dvar)])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
-	plt.title('Frequency Band Variance of Short-time BASK Subband')
-	plt.savefig('images/vad_fre_bask_sub_band_var.png', bbox_inches='tight', dpi=600)
+	plt.title('Short-time Frequency Band Variance')
+	plt.savefig('images/vad_fre_band_var.png', bbox_inches='tight', dpi=600)
 	plt.show()
-	

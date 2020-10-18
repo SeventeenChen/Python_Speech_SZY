@@ -1,10 +1,9 @@
-#
+# VAD Short-term average energy & Short-term average zero-crossing
 # pr6_2_1
 
-from Universal import *
 from Noisy import *
+from Universal import *
 from VAD import *
-
 
 
 def vad_ezr(x, wlen, inc, NIS):
@@ -147,5 +146,5 @@ if __name__ == '__main__':
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
 	plt.title('Noisy Speech SNR = 20dB')
-	# plt.savefig('images/vad_ezr.png', bbox_inches='tight', dpi=600)
+	plt.savefig('images/vad_ezr.png', bbox_inches='tight', dpi=600)
 	plt.show()

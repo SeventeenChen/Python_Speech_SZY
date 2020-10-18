@@ -1,8 +1,8 @@
-#
-# pr6_3_5
+# Short Term Energy Zero-crossing Ratio
+# pr6_7_1
 
-from Universal import *
 from Noisy import *
+from Universal import *
 from VAD import *
 
 if __name__ == '__main__':
@@ -29,64 +29,52 @@ if __name__ == '__main__':
 	fn = y.shape[1]  # frame number
 	frameTime = speech.FrameTime(fn, wlen, inc, fs)  # frame to time
 	
-	Rw = np.zeros(2 * wlen - 1)
-	for k in range(NIS):
-		u = y[:, k]  # one frame
-		ru = np.correlate(u, u, 'full')  # self-correlate
-		Rw = Rw + ru
-	Rw = Rw / NIS
-	Rw2 = np.sum(Rw ** 2)
+	aparam = 2                      # parameter of energy
+	bparam = 1                      # parameter of zero-crossing
+	etemp = np.sum(y ** 2, axis=0)       # energy
+	etemp1 = np.log10(1 + etemp / aparam)
+	Vad = VAD()
+	zcr = Vad.zc2(y, fn)
+	Ecr = etemp1 / (zcr + bparam)   # energy zero-crossing ratio
+	Ecrm = Vad.multimidfilter(Ecr, 2)           # smoothing
+	dth = np.mean(Ecrm[0 : NIS])                # threshold
+	T1 = 1.2 * dth
+	T2 = 2 * dth
 	
-	Ru = np.zeros(fn)
-	for k in range(fn):
-		u = y[:, k]  # one frame
-		ru = np.correlate(u, u, 'full')  # self-correlate
-		Cm = np.sum(ru * Rw)
-		Cru = np.sum(ru * ru)
-		Ru[k] = Cm / np.sqrt(Rw2 * Cru)
-	
-	vad = VAD()
-	Rum = vad.multimidfilter(Ru, 10)  # smoothing
-	alphath = np.mean(Rum[0: NIS])  # threshold
-	T1 = 0.9 * alphath
-	T2 = 0.8 * alphath
-	voiceseg, vsl, SF, NF = vad.vad_param1D_revr(Rum, T1, T2)
+	[voiceseg, vsl, SF, NF] = Vad.vad_param1D(Ecrm, T1, T2)     # vad in ecr with 2 thresholds
 	
 	# figure
 	plt.figure(figsize=(9, 16))
 	plt.subplot(3, 1, 1)
 	plt.plot(time, x)
-	plt.axis([0, np.max(time), -1, 1])
 	for k in range(vsl):
 		nx1 = voiceseg['begin'][k]
 		nx2 = voiceseg['end'][k]
-		nx3 = voiceseg['duration'][k]
-		print('{}, begin = {}, end = {}, duration = {}'.format(k + 1, nx1, nx2, nx3))
+		print('{}, begin = {}, end = {}'.format(k + 1, nx1, nx2))
 		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([-1, 1]), 'k', linewidth=1)
 		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([-1, 1]), 'k--', linewidth=1)
-	
+	plt.axis([0, np.max(time), -1, 1])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
 	plt.title('Clean Speech Signal')
 	plt.subplot(3, 1, 2)
 	plt.plot(time, signal)
+	plt.axis([0, np.max(time), np.min(signal), np.max(signal)])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
 	plt.title('Noisy Speech Signal SNR = {}dB'.format(SNR))
 	plt.subplot(3, 1, 3)
-	plt.plot(frameTime, Rum)
-	plt.plot(np.array([0, np.max(time)]), np.array([T1, T1]), 'b', linewidth=0.8)
-	plt.plot(np.array([0, np.max(time)]), np.array([T2, T2]), 'r--', linewidth=0.8)
+	plt.plot(frameTime, Ecrm)
+	plt.axis([0, np.max(time), 0, 1.2 * np.max(Ecrm)])
+	plt.xlabel('Time [s]')
+	plt.ylabel('Energy Zero-crossing Ratio')
+	plt.title('Short Term Energy Zero-crossing Ratio')
 	for k in range(vsl):
 		nx1 = voiceseg['begin'][k]
 		nx2 = voiceseg['end'][k]
-		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([0, 1.2]), 'k', linewidth=1)
-		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([0, 1.2]), 'k--', linewidth=1)
-	plt.grid()
-	plt.axis([0, np.max(time), 0, 1])
-	plt.xlabel('Time [s]')
-	plt.ylabel('Amplitude')
-	plt.title('Cosine Angle of Short-term Auto-correlation')
-	plt.savefig('images/vad_cos_corr.png', bbox_inches='tight', dpi=600)
+		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([0, 1.2 * np.max(Ecrm)]), 'k', linewidth=1)
+		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([0, 1.2 * np.max(Ecrm)]), 'k--', linewidth=1)
+		plt.plot(np.array([0, np.max(time)]), np.array([T1, T1]), 'b', linewidth=1)
+		plt.plot(np.array([0, np.max(time)]), np.array([T2, T2]), 'r--', linewidth=1)
+	plt.savefig('images/vad_energy_zerocrossing_ratio.png', bbox_inches='tight', dpi=600)
 	plt.show()
-

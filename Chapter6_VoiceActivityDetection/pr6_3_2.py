@@ -1,44 +1,45 @@
-#
+# Short-Term Cross-Correlation
 # pr6_3_1
 
-from Universal import *
 from Noisy import *
+from Universal import *
 from VAD import *
 
 if __name__ == '__main__':
 	# Set_I
-	IS = 0.25           # unvoice segemnt length
-	wlen = 200          # frame length 25ms
-	inc = 80            # frame shift
+	IS = 0.25  # unvoice segemnt length
+	wlen = 200  # frame length 25ms
+	inc = 80  # frame shift
 	filename = 'bluesky1.wav'
 	SNR = 10
 	
 	# PART_I
 	speech = Speech()
 	xx, fs = speech.audioread(filename, 8000)
-	xx = xx - np.mean(xx)       # DC
-	x = xx / np.max(xx)         # normalized
+	xx = xx - np.mean(xx)  # DC
+	x = xx / np.max(xx)  # normalized
 	N = len(x)
 	time = np.arange(N) / fs
 	noisy = Noisy()
-	signal, _ =  noisy.Gnoisegen(x, SNR)   # add noise
-	wnd = np.hamming(wlen)              # window function
+	signal, _ = noisy.Gnoisegen(x, SNR)  # add noise
+	wnd = np.hamming(wlen)  # window function
 	overlap = wlen - inc
-	NIS = int((IS * fs - wlen) / inc + 1)   # unvoice segment frame number
+	NIS = int((IS * fs - wlen) / inc + 1)  # unvoice segment frame number
 	y = speech.enframe(signal, list(wnd), inc).T
-	fn = y.shape[1]                         # frame number
-	frameTime = speech.FrameTime(fn, wlen, inc, fs)     # frame to time
+	fn = y.shape[1]  # frame number
+	frameTime = speech.FrameTime(fn, wlen, inc, fs)  # frame to time
 	
 	Ru = np.zeros(fn)
 	for k in range(1, fn):
-		u = y[:, k]
-		ru = np.correlate(u, u, 'full')
+		u1 = y[:, k - 1]
+		u2 = y[:, k]
+		ru = np.correlate(u1, u2, 'full')
 		Ru[k] = np.max(ru)
 	
 	vad = VAD()
-	Rum = vad.multimidfilter(Ru, 10)        # smoothing
-	Rum = Rum / np.max(Rum)                 # normalized
-	thredth = np.max(Rum[0: NIS])           # threshold
+	Rum = vad.multimidfilter(Ru, 10)  # smoothing
+	Rum = Rum / np.max(Rum)  # normalized
+	thredth = np.max(Rum[0: NIS])  # threshold
 	T1 = 1.1 * thredth
 	T2 = 1.3 * thredth
 	voiceseg, vsl, SF, NF = vad.vad_param1D(Rum, T1, T2)
@@ -71,13 +72,12 @@ if __name__ == '__main__':
 	plt.axis([0, np.max(time), -0.05, 1.2])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
-	plt.title('Short-Term Self-Correlation')
-	plt.savefig('images/vad_self_corr.png', bbox_inches='tight', dpi=600)
+	plt.title('Short-Term Cross-Correlation')
+	plt.savefig('images/vad_cross_corr.png', bbox_inches='tight', dpi=600)
 	plt.show()
-	
-	
-	
-	
-		
-	
-	
+
+
+
+
+
+

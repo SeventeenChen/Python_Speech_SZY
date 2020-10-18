@@ -1,27 +1,44 @@
-#
-# pr6_2_2
+# VAD with 2 parameters
+# pr6_2_2_smoothing
 
-from Universal import *
 from Noisy import *
+from Universal import *
 from VAD import *
 
-def vad_param2D_revr(dst1, dst2, T1, T2, T3, T4=None):
+
+def vad_ezrm(x, wlen, inc, NIS):
 	"""
-	VAD with two parameters, dst1 & dst2, dst2: reverse comparison
-	:param dst1: parameter1
-	:param dst2: parameter2
-	:param T1, T2, T3, T4: threshold
+	 Smoothing Processing
+	 Speech Endpoint Detection using Short-term average energy & Short-term average zero-crossing
+	:param x: signal
+	:param wlen: frame length
+	:param inc: frame shift
+	:param NIS: number of leading non-sentence frames
 	:return voiceseg:
 	:return vsl:
 	:return SF:
 	:return NF:
 	"""
-	fn = len(dst1)              # frame number
-	maxsilence = 8             # initialization
+	x = x.reshape(-1, 1).squeeze()
+	maxsilence = 15                     # initialization
 	minlen = 5
 	status = 0
 	count = [0]
 	silence = [0]
+	
+	speech = Speech()
+	y = speech.enframe(x, wlen, inc).T  # enframe
+	fn = y.shape[1]  # frame number
+	amp = np.sum(y ** 2, axis=0)  # short-term average energy
+	vad = VAD()
+	zcr = vad.zc2(y, fn)  # short-term average zero-cross
+	ampm = vad.multimidfilter(amp, 5)   # medfilter smoothing
+	zcrm = vad.multimidfilter(zcr, 5)
+	ampth = np.mean(ampm[0: NIS])  # non-speech segment energy
+	zcrth = np.mean(zcrm[0: NIS])  # non-speech segment zero-cross
+	amp2 = 1.2 * ampth
+	amp1 = 1.5 * ampth  # energy threshold
+	zcr2 = 0.8 * zcrth  # zreo-cross threshold
 	
 	# Endpoint Detection
 	xn = 0
@@ -29,12 +46,12 @@ def vad_param2D_revr(dst1, dst2, T1, T2, T3, T4=None):
 	x2 = [0]
 	for n in range(fn):
 		if status == 0 or status == 1:  # 0:silence, 1: maybe start
-			if dst1[n] > T2 or (T4 != None and dst2[n] < T4):
+			if amp[n] > amp1:
 				x1[xn] = np.max([n - count[xn], 1])
 				status = 2
 				silence[xn] = 0
 				count[xn] = count[xn] + 1
-			elif dst1[n] > T1 or dst2[n] < T3:  # maybe voice segment
+			elif amp[n] > amp2 or zcr[n] < zcr2:  # maybe voice segment
 				status = 1
 				count[xn] = count[xn] + 1
 			else:
@@ -43,7 +60,7 @@ def vad_param2D_revr(dst1, dst2, T1, T2, T3, T4=None):
 				x1[xn] = 0
 				x2[xn] = 0
 		elif status == 2:  # voice
-			if dst1[n] > T1 or dst2[n] < T3:
+			if amp[n] > amp2 or zcr[n] < zcr2:
 				count[xn] = count[xn] + 1
 			else:
 				silence[xn] = silence[xn] + 1
@@ -84,6 +101,8 @@ def vad_param2D_revr(dst1, dst2, T1, T2, T3, T4=None):
 	
 	return voiceseg, vsl, SF, NF
 
+	
+
 if __name__ == '__main__':
 	S = Speech()
 	xx, fs = S.audioread('bluesky1.wav', 8000)
@@ -95,26 +114,14 @@ if __name__ == '__main__':
 	x, _ = noisy.Gnoisegen(xx, SNR)
 	
 	wlen = 200
-	inc = 80            # enframe
-	IS = 0.25           # IS parameter
+	inc = 80  # enframe
+	IS = 0.25  # IS parameter
 	overlap = wlen - inc
 	NIS = int((IS * fs - wlen) / inc + 1)
-	y = S.enframe(x, wlen, inc).T       # enframe
-	fn = y.shape[1]                     # frame number
-	amp = np.sum(y ** 2, axis=0)  # short-term average energy
-	vad = VAD()
-	zcr = vad.zc2(y, fn)  # short-term average zero-cross
-	ampm = vad.multimidfilter(amp, 5)  # medfilter smoothing
-	zcrm = vad.multimidfilter(zcr, 5)
-	ampth = np.mean(ampm[0: NIS])  # non-speech segment energy
-	zcrth = np.mean(zcrm[0: NIS])  # non-speech segment zero-cross
-	amp2 = 1.1 * ampth
-	amp1 = 1.3 * ampth  # energy threshold
-	zcr2 = 0.9 * zcrth  # zreo-cross threshold
-	
+	fn = int((N - wlen) / inc) + 1
 	frameTime = S.FrameTime(fn, wlen, inc, fs)
 	
-	voiceseg, vsl, SF, NF = vad_param2D_revr(amp, zcr, amp2, amp1, zcr2)
+	voiceseg, vsl, SF, NF = vad_ezrm(x, wlen, inc, NIS)
 	
 	# figure
 	plt.figure(figsize=(16, 9))
@@ -123,7 +130,7 @@ if __name__ == '__main__':
 	plt.ylabel('Amplitude')
 	plt.xlabel('Time [s]')
 	plt.axis([0, np.max(time), -1, 1])
-	plt.title('VAD 2D parameters Reverse Comparison')
+	plt.title('Endpoint Detection')
 
 	for k in range(vsl):
 		nx1 = voiceseg['begin'][k]
@@ -138,6 +145,6 @@ if __name__ == '__main__':
 	plt.axis([0, max(time), -1, 1])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
-	plt.title('Noisy Speech SNR = {}dB'.format(SNR))
-	plt.savefig('images/vad_param2D.png', bbox_inches='tight', dpi=600)
+	plt.title('Noisy Speech SNR = 10dB')
+	plt.savefig('images/vad_ezrm.png', bbox_inches='tight', dpi=600)
 	plt.show()

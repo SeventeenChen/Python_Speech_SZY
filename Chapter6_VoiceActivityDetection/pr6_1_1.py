@@ -1,4 +1,5 @@
-#pr6_1_1
+# VAD Short-term average energy & Short-term average zero-crossing
+# pr6_1_1
 
 from Universal import *
 from VAD import *
@@ -131,5 +132,5 @@ if __name__ == '__main__':
 		print('k = {}, begin = {}, end = {}, duration = {}'.format(k + 1, nx1, nx2, nx3))
 		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([-1.5, 1.5]), 'k', linewidth = 2)
 		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([-1.5, 1.5]), 'k--', linewidth = 2)
-	# plt.savefig('images/EndpointDetection.png', bbox_inches='tight', dpi=600)
+	plt.savefig('images/VoiceActivityDetection.png', bbox_inches='tight', dpi=600)
 	plt.show()

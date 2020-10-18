@@ -1,10 +1,9 @@
-#
+# Short-term Spectral Entropy
 # pr6_6_1
 
-from Universal import *
 from Noisy import *
+from Universal import *
 from VAD import *
-
 
 if __name__ == '__main__':
 	# Set_I

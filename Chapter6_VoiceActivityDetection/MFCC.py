@@ -1,11 +1,12 @@
 # mfcc function
 # 提取MFCC参数
 
-from Universal import Speech
-from scipy.signal import *
-import numpy as np
 import math
 
+import numpy as np
+from scipy.signal import *
+
+from Universal import Speech
 
 
 class MFCC:

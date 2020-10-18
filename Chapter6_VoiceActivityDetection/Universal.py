@@ -1,10 +1,11 @@
 # 通用类
-import pyaudio
 import wave
+
 import librosa
 import librosa.display
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pyaudio
 
 
 class Speech:
@@ -47,7 +48,7 @@ class Speech:
     def audiowrite(self):
         pass
 
-    def audioread(self, path, sr):
+    def audioread(self, path, sr = None):
         data, sample_rate = librosa.load(path, sr = sr)
         return data, sample_rate
 

@@ -1,4 +1,4 @@
-#
+# VAD normalized short-term average energy
 # pr6_2_3
 
 from Universal import *

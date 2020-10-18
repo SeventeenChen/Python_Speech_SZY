@@ -1,10 +1,12 @@
-#
+# EMD decomposition Average Teager Energy
 # pr6_8_2
 
-from Universal import *
-from Noisy import *
-from VAD import *
 from PyEMD import EMD
+
+from Noisy import *
+from Universal import *
+from VAD import *
+
 
 def steager(z):
 	"""

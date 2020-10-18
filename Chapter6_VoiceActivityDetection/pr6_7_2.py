@@ -1,11 +1,9 @@
-#
-# pr6_5_3
+# Short Term Energy Entropy Ratio
+# pr6_7_2
 
-from Universal import *
 from Noisy import *
+from Universal import *
 from VAD import *
-from MFCC import *
-
 
 if __name__ == '__main__':
 	# Set_I
@@ -31,27 +29,27 @@ if __name__ == '__main__':
 	fn = y.shape[1]  # frame number
 	frameTime = speech.FrameTime(fn, wlen, inc, fs)  # frame to time
 	
-	Mfcc = MFCC()
-	ccc = Mfcc.mfcc(signal, fs, 16, wlen, inc)          # MFCC
-	fn1 = ccc.shape[0]                                  # frame number
-	frameTime1 = frameTime[2 : fn - 2]
-	Ccep = ccc[:, 0 : 16]                               # MFCC coefficient
-	C0 = np.mean(Ccep[0 : 5, :], axis = 0)              # calculate approximate average noise MFCC coefficient
-	Dcep = np.zeros(fn)
-	for i in range(5, fn1):
-		Cn = Ccep[i, :]                                 # one frame MFCC cepstrum coefficient
-		Dstu = 0
-		for k in range(16):                             # calculate the MFCC cepstrum distance
-			Dstu += (Cn[k] - C0[k]) ** 2                # between each frame and noise
-		Dcep[i] = np.sqrt(Dstu)
-	Dcep[0 : 5] = Dcep[5]
+	aparam = 2                                                  # parameter of energy
+	Esum = np.zeros(fn)
+	H = np.zeros(fn)
+	Ef = np.zeros(fn)
+	for i in range(fn):
+		S = np.abs(np.fft.fft(y[:, i]))                         # FFT
+		Sp = S[0 : int(wlen / 2 + 1)]                           # positive frequency
+		Esum[i] = np.log10(1 + np.sum(Sp ** 2) / aparam)        # log energy
+		prob = Sp / np.sum(Sp)                                  # probability
+		EPS = np.finfo(float).eps
+		H[i] = -np.sum(prob * np.log(prob + EPS))               # spectral entropy
+		Ef[i] = np.sqrt(1 + np.abs(Esum[i] / H[i]))             # energy entropy ratio
 	
 	Vad = VAD()
-	Dstm = Vad.multimidfilter(Dcep, 10)  # smoothing
-	dth = np.max(Dstm[0: NIS])
-	T1 = dth
-	T2 = 1.5 * dth
-	[voiceseg, vsl, SF, NF] = Vad.vad_param1D(Dstm, T1, T2)
+	Enm = Vad.multimidfilter(Ef, 10)                            # smoothing
+	Me = np.max(Enm)
+	eth = np.mean(Enm[0 : NIS])
+	Det = Me - eth                                              # threshold
+	T1 = 0.05 * Det + eth
+	T2 = 0.1 * Det + eth
+	[voiceseg, vsl, SF, NF] = Vad.vad_param1D(Enm, T1, T2)  # vad in ecr with 2 thresholds
 	
 	# figure
 	plt.figure(figsize=(9, 16))
@@ -74,17 +72,19 @@ if __name__ == '__main__':
 	plt.ylabel('Amplitude')
 	plt.title('Noisy Speech Signal SNR = {}dB'.format(SNR))
 	plt.subplot(3, 1, 3)
-	plt.plot(frameTime, Dstm)
-	plt.axis([0, np.max(time), 0, 1.2 * np.max(Dstm)])
+	plt.plot(frameTime, Enm)
+	top = Det * 1.1 + eth
+	bottom = eth - 0.1 * Det
+	plt.axis([0, np.max(time), bottom, top])
 	plt.xlabel('Time [s]')
-	plt.ylabel('Amplitude')
-	plt.title('Short-term MFCC Cepstrum Distance')
+	plt.ylabel('Energy Entropy Ratio')
+	plt.title('Short Term Energy Entropy Ratio')
 	for k in range(vsl):
 		nx1 = voiceseg['begin'][k]
 		nx2 = voiceseg['end'][k]
-		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([0, 1.2 * np.max(Dstm)]), 'k', linewidth=1)
-		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([0, 1.2 * np.max(Dstm)]), 'k--', linewidth=1)
+		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([bottom, top]), 'k', linewidth=1)
+		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([bottom, top]), 'k--', linewidth=1)
 		plt.plot(np.array([0, np.max(time)]), np.array([T1, T1]), 'b', linewidth=1)
 		plt.plot(np.array([0, np.max(time)]), np.array([T2, T2]), 'r--', linewidth=1)
-	plt.savefig('images/vad_mfcc_cepstrum_distance.png', bbox_inches='tight', dpi=600)
+	plt.savefig('images/vad_energy_entropy_ratio.png', bbox_inches='tight', dpi=600)
 	plt.show()

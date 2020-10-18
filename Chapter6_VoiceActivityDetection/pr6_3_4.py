@@ -1,8 +1,9 @@
-#
-# pr6_4_1
+# Short-term Auto-correlation Primary and Secondary Peak Ratio
+# pr6_3_4
 
-from Universal import *
+
 from Noisy import *
+from Universal import *
 from VAD import *
 
 if __name__ == '__main__':
@@ -29,25 +30,21 @@ if __name__ == '__main__':
 	fn = y.shape[1]  # frame number
 	frameTime = speech.FrameTime(fn, wlen, inc, fs)  # frame to time
 	
-	Y = np.fft.fft(y, axis=0)           # FFT
-	N2 = int(wlen / 2 + 1)              # positive frequency
-	n2 = np.arange(N2)
-	Y_abs = np.abs(Y[n2, :])            # amplitude
-	M = int(np.fix(N2 / 4))                  # subband number
-	SY = np.zeros((M, fn))
-	Dvar = np.zeros(fn)
-	for k in range(fn):
-		for i in range(M):
-			j = i *4 + 1                    # 4 spectral line
-			SY[i, k] = Y_abs[j, k] + Y_abs[j + 1, k] + Y_abs[j + 2, k] + Y_abs[j + 3, k]
-		Dvar[k] = np.var(SY[:, k])          # frequency sub-band variance per frame
+	R1 = np.zeros(fn)
+	for k in range(1, fn):
+		u = y[:, k]  # one frame
+		ru = np.correlate(u, u, 'full')  # self-correlate
+		ru0 = ru[wlen - 1]
+		ru1 = np.max(ru[wlen + 16 : wlen + 133])        # first secondary peak
+		R1[k] = ru0 / ru1
 	
 	vad = VAD()
-	Dvarm = vad.multimidfilter(Dvar, 10)        # smoothing
-	dth = np.mean(Dvar[0 : NIS])                # threshold
-	T1 = 1.5 * dth
-	T2 = 3 * dth
-	voiceseg, vsl, SF, NF = vad.vad_param1D(Dvar, T1, T2)
+	Rum = vad.multimidfilter(R1, 20)  # smoothing
+	Rum = Rum / np.max(Rum)  # normalized
+	thredth = np.max(Rum[0: NIS])  # threshold
+	T1 = 0.95 * thredth
+	T2 = 0.75 * thredth
+	voiceseg, vsl, SF, NF = vad.vad_param1D_revr(Rum, T1, T2)
 	
 	# figure
 	plt.figure(figsize=(9, 16))
@@ -67,25 +64,23 @@ if __name__ == '__main__':
 	plt.title('Clean Speech Signal')
 	plt.subplot(3, 1, 2)
 	plt.plot(time, signal)
-	plt.axis([0, np.max(time), np.min(signal), np.max(signal)])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
 	plt.title('Noisy Speech Signal SNR = {}dB'.format(SNR))
 	plt.subplot(3, 1, 3)
-	plt.plot(frameTime, Dvar)
-	
+	plt.plot(frameTime, Rum)
+	plt.plot(np.array([0, np.max(time)]), np.array([T1, T1]), 'b', linewidth=0.8)
+	plt.plot(np.array([0, np.max(time)]), np.array([T2, T2]), 'r--', linewidth=0.8)
 	for k in range(vsl):
 		nx1 = voiceseg['begin'][k]
 		nx2 = voiceseg['end'][k]
-		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([0, 1.2 * np.max(Dvar)]), 'k', linewidth=1)
-		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([0, 1.2 * np.max(Dvar)]), 'k--', linewidth=1)
+		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([0, 1.2]), 'k', linewidth=1)
+		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([0, 1.2]), 'k--', linewidth=1)
 	plt.grid()
-	plt.axis([0, np.max(time), 0, 1.2 * np.max(Dvar)])
+	plt.axis([0, np.max(time), 0, 1.2])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
-	plt.title('Frequency Band Variance of Short-time Uniform Subband')
-	plt.savefig('images/vad_fre_sub_band_var.png', bbox_inches='tight', dpi=600)
+	plt.title('Short-term Auto-correlation Primary and Secondary Peak Ratio')
+	plt.savefig('images/vad_ratio_self_corr.png', bbox_inches='tight', dpi=600)
 	plt.show()
-	
-			
-	
+

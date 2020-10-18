@@ -1,42 +1,9 @@
-#
+# Log Spectral Distance
 # pr6_5_1
 
-from Universal import *
 from Noisy import *
+from Universal import *
 from VAD import *
-
-
-def vad(signal, noise,NoiseCounter = 0, NoiseMargin = 3.0, Hangover = 8):
-	"""
-	Spectral Distance Voice Activity Detector
-	:param signal: the current frames magnitude spectrum which is to labeld as noise or speech
-	:param noise: noise magnitude spectrum template (estimation)
-	:param NoiseCounter: the number of imediate previous noise frames
-	:param NoiseMargin: (default 3) the spectral distance threshold
-	:param Hangover: (default 8) the number of noise segments after which the SPEECHFLAG is reset (goes to zero)
-	:return NoiseCounter: the number of previous noise segments
-	:return Dist: spectral distance
-	"""
-	FreqResol = len(signal)
-	
-	SpectralDist = 20 * (np.log10(signal) - np.log10(noise))
-	SpectralDist[np.where(SpectralDist < 0)] = 0
-	
-	Dist = np.mean(SpectralDist)
-	if(Dist < NoiseMargin):
-		NoiseFlag = 1
-		NoiseCounter = NoiseCounter + 1
-	else:
-		NoiseFlag = 0
-		NoiseCounter = 0
-	
-	# Detect noise only periods and attenuate the signal
-	if (NoiseCounter > Hangover):
-		SpeechFlag = 0
-	else:
-		SpeechFlag = 1
-	
-	return NoiseFlag, SpeechFlag, NoiseCounter, Dist
 
 if __name__ == '__main__':
 	# Set_I
@@ -70,6 +37,7 @@ if __name__ == '__main__':
 	SF = np.zeros(fn)                      # noise flag
 	NF = np.zeros(fn)                      # speech flag
 	D = np.zeros(fn)
+	Vad = VAD()
 	for i in range(fn):
 		if i <= NIS:                       # NF=1,SF=0 in the leading unvoiced noise segement
 			SpeechFlag = 0
@@ -77,7 +45,7 @@ if __name__ == '__main__':
 			SF[i] = 0
 			NF[i] = 1
 		else:
-			[NoiseFlag, SpeechFlag, NoiseCounter, Dist] = vad(Y[:, i], N, NoiseCounter, 2.5, 8)
+			NoiseFlag, SpeechFlag, NoiseCounter, Dist = Vad.vad(Y[:, i], N, NoiseCounter, 2.5, 8)
 			SF[i] = SpeechFlag
 			NF[i] = NoiseFlag
 			D[i] = Dist
