@@ -16,7 +16,7 @@ def simplesubspec(signal, wlen, inc, NIS, a, b):
 	:param inc: frame shift
 	:param NIS: leading unvoiced segment frame number
 	:param a: over subtraction factor
-	:param b: ain compensation factor
+	:param b: gain compensation factor
 	:return output: denoise speech
 	"""
 	wnd = np.hamming(wlen)              # window function
