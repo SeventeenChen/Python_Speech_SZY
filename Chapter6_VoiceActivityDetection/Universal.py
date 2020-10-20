@@ -1,4 +1,6 @@
 # 通用类
+
+import cmath
 import wave
 
 import librosa
@@ -100,7 +102,43 @@ class Speech:
     
         return snr
 
-
+    def OverlapAdd2(self, X, A=None, W=None, S=None):
+        """
+		reconstruction signal form spectrogram
+		:param X: FFT spectrum matrix (each column: frame fft)
+		:param A: phase angle (dimension = X), default = 0
+		:param W: window length (default: 2 * fft length)
+		:param S: shift length (default: W/2)
+		:return Y: reconstructed signal from its spectrogram
+		"""
+        if A is None:
+            A = np.angle(X)
+        if W is None:
+            W = X.shape[0] * 2
+        if S is None:
+            S = int(W / 2)
+    
+        if int(S) != S:  # frame shift not an integer
+            S = int(S)
+            print('The shift length have to be an integer as it is the number of samples.\n')
+            print('shift length is fixed to {}'.format(S))
+    
+        FreqRes, FrameNum = X.shape  # frame number, fft number
+        Spec = X * np.exp(A * cmath.sqrt(-1))  # complex spectrum
+        if np.mod(W, 2):
+            Spec = np.concatenate((Spec, np.flipud(np.conj(Spec[1::-1, :]))))  # negative frequency
+        else:
+            Spec = np.concatenate((Spec, np.flipud(np.conj(Spec[1:(len(Spec) - 1), :]))))  # negative frequency
+    
+        sig = np.zeros((FrameNum - 1) * S + W)  # initialization
+        weight = sig
+        for i in range(FrameNum):  # overlap
+            start = i * S  # start sample point of ith frame
+            spec = Spec[:, i]  # ith frame spectrum
+            sig[start: (start + W)] = sig[start: (start + W)] + np.real(np.fft.ifft(spec, W, axis=0))
+        Y = sig
+    
+        return Y
 
 
 
