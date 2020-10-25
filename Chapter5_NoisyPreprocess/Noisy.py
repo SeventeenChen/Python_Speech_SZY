@@ -1,10 +1,11 @@
 # class Noisy
 
+import librosa
 import numpy as np
 
 
 class Noisy:
-	def Gnoisegen(x, snr):
+	def Gnoisegen(self, x, snr):
 		"""
 		Generate Gaussian white noise according to the set SNR, return noisy speech
 		:param x: clean speech signal
@@ -23,7 +24,7 @@ class Noisy:
 		
 		return y, noise
 	
-	def SNR_singlech(I, In):
+	def SNR_singlech(self, I, In):
 		"""
 		calculate SNR of noisy speech signal
 		:param I: clean speech siganl
@@ -37,3 +38,43 @@ class Noisy:
 		snr = 10 * np.log10(Ps / Pn)
 		
 		return snr
+	
+	def add_noisedata(s, data, fs, fs1, snr):
+		"""
+		把任意的噪声数据按设定的信噪比叠加在纯净信号上，构成带噪语音
+		:param s: clean speech signal
+		:param data: arbitrary noise data
+		:param fs: clean signal sample frequency
+		:param fs1: data sample frequency
+		:param snr: SNR [dB]
+		:return noise: noise scaled by the set SNR
+		:return signal: noisy (size: n * 1)
+		"""
+		
+		s = s.reshape(-1, 1)
+		s = s - np.mean(s)
+		sL = len(s)
+		
+		if fs != fs1:
+			x = librosa.resample(data, fs, fs1)  # noise reample
+		else:
+			x = data
+		
+		x = x.reshape(-1, 1)
+		x = x - np.mean(x)
+		xL = len(x)
+		
+		if xL >= sL:
+			x = x[0: sL]
+		else:
+			print('Warning noise length < signal length, padding with zero')
+			x = np.concatenate((x, np.zeros(sL - xL)))
+		
+		Sr = snr
+		Es = np.sum(x * x)
+		Ev = np.sum(s * s)
+		a = np.sqrt(Ev / Es / (10 ** (Sr / 10)))  # noise ratio
+		noise = a * x
+		signal = s + noise  # noisy
+		
+		return signal, noise
