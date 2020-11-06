@@ -130,7 +130,7 @@ class Speech:
         else:
             Spec = np.concatenate((Spec, np.flipud(np.conj(Spec[1:(len(Spec) - 1), :]))))  # negative frequency
     
-        sig = np.zeros((FrameNum - 1) * S + W)  # initialization
+        sig = np.zeros(int((FrameNum - 1) * S + W))  # initialization
         weight = sig
         for i in range(FrameNum):  # overlap
             start = i * S  # start sample point of ith frame
