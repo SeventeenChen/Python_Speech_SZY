@@ -151,3 +151,85 @@ class Enhancement:
 		
 		return output
 	
+	def SSBoll79_2(self, signal, fs, T1, IS=None):
+		"""
+		Spectral Subtraction based on Boll 79. Amplitude spectral subtraction
+		Includes Magnitude Averaging and Residual noise Reduction
+		:param signal: noisy signal
+		:param fs: sampling frequency
+		:param IS: initial silence (noise only) length in seconds (default value is .25 sec)
+		:return output: denoise signal
+		"""
+		if not IS:
+			IS = 0.25  # seconds
+			W = int(0.025 * fs)  # window length 25ms
+			nfft = W
+			# overlap-add method works good with this shift value
+			SP = 0.4  # frame shift 40% (10ms)
+			wnd = np.hamming(W)
+		elif isinstance(IS, float):
+			W = int(0.025 * fs)  # window length 25ms
+			nfft = W
+			# overlap-add method works good with this shift value
+			SP = 0.4  # frame shift 40% (10ms)
+			wnd = np.hamming(W)
+		
+		# IGNORE THIS SECTION FOR COMPATIBILITY WITH ANOTHER PROGRAM FROM HERE.....
+		if isinstance(IS, dict):
+			W = IS['windowsize']
+			SP = IS['shiftsize'] / W
+			nfft = IS['nfft']
+			wnd = IS['window']
+			if hasattr(IS, 'IS'):
+				IS = IS['IS']
+			else:
+				IS = 0.25
+		
+		# .......IGNORE THIS SECTION FOR COMPATIBILITY WITH ANOTHER PROGRAM T0 HERE
+		
+		NIS = int((IS * fs - W) / (SP * W) + 1)  # number of initial silence segments
+		Gamma = 1  # 1: magnitude, 2: power spectrum
+		
+		y = self.segment(signal, W, SP, wnd)
+		Y = np.fft.fft(y, axis=0)
+		FreqResol, NumberofFrames = Y.shape
+		YPhase = np.angle(Y[0: int(NumberofFrames / 2) + 1, :])  # noisy speech phase
+		Y = np.abs(Y[0: int(NumberofFrames / 2) + 1, :]) ** Gamma  # Spectrogram
+		
+		N = np.mean(Y[:, 0:NIS].T, axis=0).T  # initial noise power spectrum mean
+		NRM = np.zeros(N.shape)  # Noise Residual Maximum (Initialization)
+		NoiseCounter = 0
+		NoiseLength = 9  # smoothing factor for noise updating
+		
+		Beta = 0.03
+		fn = NumberofFrames
+		miniL = 5
+		voiceseg, vosl, SF, Ef = VAD().pitch_vad1(y, fn, T1, miniL)
+		YS = Y  # Y magnitude average
+		for i in np.arange(1, NumberofFrames - 1):
+			YS[:, i] = (YS[:, i - 1] + YS[:, i] + YS[:, i + 1]) / 3
+		
+		X = np.zeros(Y.shape)
+		D = np.zeros(FreqResol)
+		for i in range(NumberofFrames):
+			# Magnitude Spectrum Distance VAD
+			NoiseFlag, SpeechFlag, NoiseCounter, Dist = VAD().vad(Y[:, i] ** (1 / Gamma), N ** (1 / Gamma),
+			                                                      NoiseCounter)
+			SpeechFlag = SF[i]
+			if SpeechFlag == 0:
+				N = (NoiseLength * N + Y[:, i]) / (NoiseLength + 1)  # update and smooth noise
+				NRM = np.maximum(NRM, YS[:, i] - N)  # update maximum noise  residue
+				X[:, i] = Beta * Y[:, i]
+			else:
+				D = YS[:, i] - N  # spectral subtraction
+				if i > 0 and i < NumberofFrames - 1:  # residual noise reduction
+					for j in range(len(D)):
+						if D[j] < NRM[j]:
+							D[j] = np.min(np.array([D[j], YS[j, i - 1] - N[j], YS[j, i + 1] - N[j]]))
+				D[D < 0] = 0
+				X[:, i] = D
+		
+		output = Speech().OverlapAdd2(X ** (1 / Gamma), YPhase, int(W), int(SP * W))
+		output = output / np.max(np.abs(output))            # normalized
+		
+		return output

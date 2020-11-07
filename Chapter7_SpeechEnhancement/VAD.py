@@ -354,3 +354,52 @@ class VAD:
 			SpeechFlag = 1
 		
 		return NoiseFlag, SpeechFlag, NoiseCounter, Dist
+	
+	def pitch_vad1(self, y, fn, T1, miniL = 10):
+		"""
+		vad with energy entropy ratio
+		:param y: enframe speech matrix
+		:param fn: frame number
+		:param T1: threshold
+		:param miniL: min frame number in voice segment
+		:return voiceseg, vosl, SF, Ef:
+		"""
+		if (y.shape[1] != fn):
+			y = y.T
+		wlen = y.shape[0]                                   # frame length
+		Esum = np.zeros(fn)                                 # energy
+		H = np.zeros(fn)                                    # spectral entropy
+		for i in range(fn):
+			Sp = np.abs(np.fft.fft(y[:, i]))                # FFT -> amplitude
+			Sp = Sp[0 : int(wlen / 2) + 1]                  # positive frequency
+			Esum[i] = np.sum(Sp * Sp)                       # energy
+			prob = Sp / (np.sum(Sp))                        # probability
+			EPS = np.finfo(float).eps
+			H[i] = -1 *  np.sum(prob * np.log(prob + EPS))  # entropy
+			
+		hindex = np.where(H<0.1)
+		H[hindex] = np.max(H)
+		Ef = np.sqrt(1 + np.abs(Esum / H))                  # energy entropy ratio
+		Ef = Ef / np.max(Ef)                                # normalized
+		
+		zindex = np.where(Ef >= T1)
+		zseg = self.findSegemnt(zindex)                     # vad segment information
+		zsl = len(zseg['begin'])                            # segment number
+		j = 0
+		SF = np.zeros(fn)                                   # speech flag
+		voiceseg = {}
+		for k in range(zsl):                                # eliminate < miniL in > T1
+			if zseg['duration'][k] >= miniL:
+				j = j + 1
+				in1 = zseg['begin'][k]
+				in2 = zseg['end'][k]
+				voiceseg.setdefault('begin', []).append(in1)
+				voiceseg.setdefault('end', []).append(in2)
+				voiceseg.setdefault('duration', []).append(zseg['duration'][k])
+				SF[in1 : in2] = 1
+		
+		vosl = len(voiceseg['begin'])
+				
+		return 	voiceseg,vosl,SF,Ef
+			
+			
