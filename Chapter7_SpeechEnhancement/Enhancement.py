@@ -1,8 +1,11 @@
 #
 # Class Enhancement
 
+from spectrum import pmtm
+
 from Universal import *
 from VAD import *
+
 
 class Enhancement:
 	def simplesubspec(self, signal, wlen, inc, NIS, a, b):
@@ -231,5 +234,75 @@ class Enhancement:
 		
 		output = Speech().OverlapAdd2(X ** (1 / Gamma), YPhase, int(W), int(SP * W))
 		output = output / np.max(np.abs(output))            # normalized
+		
+		return output
+	
+	def Mtmpsd_ssb(self, signal, wlen, inc, NIS, alpha, beta, c):
+		"""
+		Spectral Subtraction
+		Multitaper Spectrum Estimation
+		Short-term Energy Entropy Ratio
+		:param signal: noisy speech
+		:param wlen: frame length
+		:param inc: frame shift
+		:param NIS: leding unvoiced (noise) frame number
+		:param alpha: over subtraction factor in spectral subtraction
+		:param beta: gain compensation factor
+		:param c: gain factor (0: power spectrum, 1: amplitude spectrum)
+		:return output: denoise speech
+		"""
+		w2 = int(wlen / 2) + 1
+		wind = np.hamming(wlen)  # hamming window
+		y = Speech().enframe(signal, list(wind), inc).T  # enframe
+		fn = y.shape[1]  # frame number
+		N = len(signal)  # signal length
+		fft_frame = np.fft.fft(y, axis=0)  # FFT
+		abs_frame = np.abs(fft_frame[0: w2, :])  # positive frequency amplitude
+		ang_frame = np.angle(fft_frame[0: w2, :])  # positive frequency phase
+		
+		# smoothing in 3 neighbour frame
+		abs_frame_backup = abs_frame
+		for i in range(1, fn - 1, 2):
+			abs_frame_backup[:, i] = 0.25 * abs_frame[:, i - 1] + 0.5 * abs_frame[:, i] + 0.25 * abs_frame[:, i + 1]
+		abs_frame = abs_frame_backup
+		
+		# multitaper spectrum estimation power spectrum
+		PSDFrame = np.zeros((w2, fn))  # PSD in each frame
+		for i in range(fn):
+			# PSDFrame[:, i] = pmtm(y[:, i], NW = 3, NFFT=wlen)
+			Sk_complex, weights, eigenvalues = pmtm(y[:, i], NW=3, NFFT=wlen)
+			Sk = (np.abs(Sk_complex) ** 2).transpose()
+			PSDTwoSide = np.mean(Sk * weights, axis=1)
+			PSDFrame[:, i] = PSDTwoSide[0: w2]
+		
+		PSDFrameBackup = PSDFrame
+		for i in range(1, fn - 1, 2):
+			PSDFrameBackup[:, i] = 0.25 * PSDFrame[:, i - 1] + 0.5 * PSDFrame[:, i] + 0.25 * PSDFrame[:, i + 1]
+		PSDFrame = PSDFrameBackup
+		
+		# average PSD of leading unvoiced segment
+		NoisePSD = np.mean(PSDFrame[:, 0: NIS], axis=1)
+		
+		# spectral subtraction -> gain factor
+		g = np.zeros((w2, fn))  # gain factor
+		g_n = np.zeros((w2, fn))
+		for k in range(fn):
+			g[:, k] = (PSDFrame[:, k] - alpha * NoisePSD) / PSDFrame[:, k]
+			g_n[:, k] = beta * NoisePSD / PSDFrame[:, k]
+			gix = np.where(g[:, k] < 0)
+			g[gix, k] = g_n[gix, k]
+		
+		gf = g
+		if c == 0:
+			g = gf
+		else:
+			g = np.sqrt(gf)
+		
+		SubFrame = g * abs_frame  # spectral subtraction amplitude
+		output = Speech().OverlapAdd2(SubFrame, ang_frame, wlen, inc)  # synthesis
+		output = output / np.max(np.abs(output))  # normalized
+		ol = len(output)
+		if ol < N:
+			output = np.concatenate((output, np.zeros(N - ol)))
 		
 		return output
