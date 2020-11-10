@@ -1,5 +1,5 @@
 # Multitaper Spectrum & Energy Entropy Ratio
-# pr6_9_3
+# p7_2_4
 
 from Enhancement import *
 from Noisy import *
