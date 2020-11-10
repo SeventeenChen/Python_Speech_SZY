@@ -4,11 +4,13 @@
 from Enhancement import *
 from Noisy import *
 
+	
+
 if __name__ == '__main__':
 	# Set_I
 	IS = 0.15  # unvoice segemnt length
 	filename = 'bluesky1.wav'
-	SNR = 0
+	SNR = 5
 	
 	# PART_I
 	speech = Speech()
@@ -20,18 +22,12 @@ if __name__ == '__main__':
 	noisy = Noisy()
 	signal, _ = noisy.Gnoisegen(x, SNR)  # add noise
 	snr1 = noisy.SNR_singlech(x, signal)
-	
-	alpha = 2.8  # over subtraction factor
-	beta = 0.001  # gain factor
-	# c = 0, power spectrum -> gain matrix without sqrt; c = 1, sqrt needed
-	c = 1
-	wlen = 200  # frame length
-	inc = 80  # frame shift
-	NIS = int((IS * fs - wlen) / inc + 1)  # leading silence segment frame number
+
 	enh = Enhancement()
-	
-	# spectral subtraction using multitaper spectrum estimation
-	output = enh.Mtmpsd_ssb(signal, wlen, inc, NIS, alpha, beta, c)
+	output = enh.WienerScalart96m_2(signal, fs, 0.12, IS)
+	LenOut = len(output)
+	if LenOut < N:
+		output = np.concatenate([output, np.zeros(N - LenOut)], axis=0)
 	snr2 = noisy.SNR_singlech(x, output)
 	print('snr1 = {:.2f} \nsnr2 = {:.2f}'.format(snr1, snr2))
 	
@@ -54,8 +50,8 @@ if __name__ == '__main__':
 	plt.axis([0, np.max(time), -1, 1])
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
-	plt.title('Spectrum Subtraction Denoise Waveform')
-	# plt.savefig('images/wiener_denoise.png', bbox_inches='tight', dpi=600)
+	plt.title('Wiener Denoise Waveform')
+	plt.savefig('images/wiener_denoise.png', bbox_inches='tight', dpi=600)
 	plt.show()
 
 

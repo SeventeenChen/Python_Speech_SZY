@@ -34,14 +34,14 @@ class VAD:
 		
 		return zcr
 	
-	def findSegemnt(self, express):
+	def findSegment(self, express):
 		"""
 		find voice start, end and length
 		:param express: speech index
 		:return soundSegment:
 		"""
 		express = express[0]
-		if express[0] == 0:  # find where express = 1
+		if express[0] == 0 and express[1] == 0:                    # find where express = 1
 			voiceIndex = np.where(express)
 		else:
 			voiceIndex = express
@@ -156,7 +156,7 @@ class VAD:
 		
 		SpeechIndex = np.where(SF == 1)  # voice segemnt
 		vad = VAD()
-		voiceseg = vad.findSegemnt(SpeechIndex)
+		voiceseg = vad.findSegment(SpeechIndex)
 		vsl = len(voiceseg['begin'])
 		
 		return voiceseg, vsl, SF, NF
@@ -237,7 +237,7 @@ class VAD:
 		
 		SpeechIndex = np.where(SF == 1)  # voice segemnt
 		vad = VAD()
-		voiceseg = vad.findSegemnt(SpeechIndex)
+		voiceseg = vad.findSegment(SpeechIndex)
 		vsl = len(voiceseg['begin'])
 		
 		return voiceseg, vsl, SF, NF
@@ -317,7 +317,7 @@ class VAD:
 		
 		SpeechIndex = np.where(SF == 1)  # voice segemnt
 		vad = VAD()
-		voiceseg = vad.findSegemnt(SpeechIndex)
+		voiceseg = vad.findSegment(SpeechIndex)
 		vsl = len(voiceseg['begin'])
 		
 		return voiceseg, vsl, SF, NF
@@ -383,12 +383,12 @@ class VAD:
 		Ef = Ef / np.max(Ef)                                # normalized
 		
 		zindex = np.where(Ef >= T1)
-		zseg = self.findSegemnt(zindex)                     # vad segment information
+		zseg = self.findSegment(zindex)                     # vad segment information
 		zsl = len(zseg['begin'])                            # segment number
 		j = 0
 		SF = np.zeros(fn)                                   # speech flag
 		voiceseg = {}
-		for k in range(zsl):                                # eliminate < miniL in > T1
+		for k in range(zsl):                                # eliminate < miniL in '>T1'
 			if zseg['duration'][k] >= miniL:
 				j = j + 1
 				in1 = zseg['begin'][k]
@@ -400,6 +400,6 @@ class VAD:
 		
 		vosl = len(voiceseg['begin'])
 				
-		return 	voiceseg,vosl,SF,Ef
+		return voiceseg,vosl,SF,Ef
 			
 			

@@ -1,6 +1,7 @@
 #
 # Class Enhancement
 
+from scipy.signal import lfilter
 from spectrum import pmtm
 
 from Universal import *
@@ -306,3 +307,89 @@ class Enhancement:
 			output = np.concatenate((output, np.zeros(N - ol)))
 		
 		return output
+	
+	
+	def WienerScalart96m_2(self, signal, fs, T1, IS):
+		"""
+		Wiener filter based on tracking a priori SNR usingDecision-Directed
+		method, proposed by Scalart et al 96. In this method it is assumed that
+		SNRpost=SNRprior +1. based on this the Wiener Filter can be adapted to a
+		model like Ephraims model in which we have a gain function which is a
+		function of a priori SNR and a priori SNR is being tracked using Decision
+		Directed method.
+		:param signal: noisy signal
+		:param fs: sampling frequency
+		:param IS: initial silence (noise only) length in seconds (default value is .25 sec)
+		:param T1: threshold
+		:return output: denoise signal
+		"""
+		if not IS:
+			IS = 0.25  # seconds
+			W = int(0.025 * fs)  # window length 25ms
+			nfft = W
+			# overlap-add method works good with this shift value
+			SP = 0.4  # frame shift 40% (10ms)
+			wnd = np.hamming(W)
+		elif isinstance(IS, float):
+			W = int(0.025 * fs)  # window length 25ms
+			nfft = W
+			# overlap-add method works good with this shift value
+			SP = 0.4  # frame shift 40% (10ms)
+			wnd = np.hamming(W)
+		
+		# IGNORE THIS SECTION FOR COMPATIBILITY WITH ANOTHER PROGRAM FROM HERE.....
+		if isinstance(IS, dict):
+			W = IS['windowsize']
+			SP = IS['shiftsize'] / W
+			nfft = IS['nfft']
+			wnd = IS['window']
+			if hasattr(IS, 'IS'):
+				IS = IS['IS']
+			else:
+				IS = 0.25
+		# .......IGNORE THIS SECTION FOR COMPATIBILITY WITH ANOTHER PROGRAM T0 HERE
+		
+		pre_emph = 0                                                # pre_emphasis parameter
+		signal = lfilter(np.array([1, -1 * pre_emph]), 1, signal)   # pre-emphasis
+		NIS = int((IS * fs - W) / (SP * W) + 1)                     # number of initial silence segments
+		y = self.segment(signal, W, SP, wnd)                        # enframe
+		Y = np.fft.fft(y, axis=0)                                   # FFT
+		FreqResol, NumberofFrames = Y.shape
+		YPhase = np.angle(Y[0: int(NumberofFrames / 2) + 1, :])     # noisy speech phase
+		Y = np.abs(Y[0: int(NumberofFrames / 2) + 1, :])            # Spectrogram
+		LambdaD = np.mean(Y[:, 0 : NIS] ** 2).T                     # initial noise power spectrum variance
+		N = np.mean(Y[:, 0:NIS].T, axis=0).T                        # initial average noise power spectrum
+	
+		alpha = 0.99
+		fn = NumberofFrames
+		miniL = 5
+		voiceseg, vosl, SF, Ef = VAD().pitch_vad1(y, fn, T1, miniL) # vad
+		
+		NoiseCounter = 0
+		NoiseLength = 9                                             # smoothing factor for noise updating
+		G = np.ones(N.shape)                                        # power estimation initialization
+		Gamma = G
+		X = np.zeros(Y.shape)                                       # Y magnitude average
+		for i in np.arange(1, NumberofFrames - 1):
+			SpeechFlag = SF[i]
+			if i <= NIS:                                            # leading unvoiced segment
+				SpeechFlag = 0
+				NoiseCounter = 100
+			if SpeechFlag == 0:                                     # update noise spectrum in unvoiced segment
+				N = (NoiseLength * N + Y[:, i])/(NoiseLength + 1)
+				LambdaD = (NoiseLength * LambdaD + Y[:, i] ** 2)/(NoiseLength + 1) # update and smoothing noise variance
+		
+		
+			gammaNew = (Y[:, i] ** 2)/LambdaD                           # post SNR
+			xi = alpha * (G ** 2) * Gamma + (1 - alpha) * np.max(gammaNew - 1, 0)   # senior SNR
+			Gamma = gammaNew
+			G = (xi/(xi + 1))                                           # wiener spectrum estimation
+			X[:, i] = G * Y[:, i]                                       # wiener filter spectrum
+			
+		
+		output = Speech().OverlapAdd2(X, YPhase, int(W), int(SP * W))
+		output = lfilter([1], np.array([1, -1 * pre_emph]), output)
+		output = output / np.max(np.abs(output))  # normalized
+		
+		return output
+		
