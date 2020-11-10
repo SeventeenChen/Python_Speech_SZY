@@ -29,6 +29,7 @@ if __name__ == '__main__':
 	inc = 80  # frame shift
 	NIS = int((IS * fs - wlen) / inc + 1)  # leading silence segment frame number
 	enh = Enhancement()
+	
 	# spectral subtraction using multitaper spectrum estimation
 	output = enh.Mtmpsd_ssb(signal, wlen, inc, NIS, alpha, beta, c)
 	snr2 = noisy.SNR_singlech(x, output)
@@ -54,7 +55,7 @@ if __name__ == '__main__':
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
 	plt.title('Spectrum Subtraction Denoise Waveform')
-	plt.savefig('images/multitaper_spectral_estimation_spectrum_subtraction.png', bbox_inches='tight', dpi=600)
+	# plt.savefig('images/wiener_denoise.png', bbox_inches='tight', dpi=600)
 	plt.show()
 
 
