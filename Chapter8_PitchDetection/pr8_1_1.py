@@ -50,7 +50,7 @@ if __name__ == '__main__':
 	plt.title('Frequency Response of Elliptical 6th-order BPF')
 	plt.xlabel('Frequency [Hz]')
 	plt.ylabel('Amplitude [dB]')
-	plt.savefig('images/elliptical_6th-order_BPF.png', bbox_inches='tight', dpi=600)
+	plt.savefig('images/elliptical_6th_BPF.png', bbox_inches='tight', dpi=600)
 	plt.show()
 	
 	
