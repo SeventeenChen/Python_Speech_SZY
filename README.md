@@ -6,6 +6,6 @@
 ## For any question, please don't hestiate to contact me!
 ### Email: 675284835@qq.com
 
-# REFRENCE
+# REFERENCE
 https://github.com/lingr7/Matlab-speech-signal-analysis-and-synthesis  
 https://github.com/busyyang/python_sound_open
