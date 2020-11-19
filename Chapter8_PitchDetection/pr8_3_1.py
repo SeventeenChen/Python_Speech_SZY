@@ -17,7 +17,7 @@ if __name__ == '__main__':
 	speech = Speech()
 	x, fs = speech.audioread(filename, 8000)
 	x = x - np.mean(x)  # DC
-	x = x / np.max(x)  # normalized
+	x = x / np.max(np.abs(x))  # normalized
 	N = len(x)
 	time = np.arange(N) / fs
 	wnd = np.hamming(wlen)  # window function
