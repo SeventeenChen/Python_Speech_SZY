@@ -61,5 +61,5 @@ if __name__ == '__main__':
 	plt.ylabel('Sampling Points')
 	plt.title('Smoothing Pitch Period')
 	plt.axis([0, np.max(time), np.min(period), np.max(period)])
-	plt.savefig('images/autocrrelation_pitch_detection.png', bbox_inches='tight', dpi=600)
+	plt.savefig('images/auto_correlation_pitch_detection.png', bbox_inches='tight', dpi=600)
 	plt.show()
