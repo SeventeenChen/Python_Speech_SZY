@@ -66,7 +66,7 @@ if __name__ == '__main__':
 	yy = speech.enframe(xx, list(wnd), inc).T   # filtered signal enframe
 	lmin = int(fs / 500)                        # min pitch period
 	lmax = int(fs / 60)                         # max pitch period
-	period = np.zeros(fn)                       # pitch period initialization
+	# period = np.zeros(fn)                       # pitch period initialization
 	# auto correlation pitch detection
 	pitch = Pitch()
 	period = ACF_corr(yy, fn, voiceseg, vosl, lmax, lmin)
