@@ -81,3 +81,43 @@ class Pitch:
 				period[k + ixb - 1] = lmin + tloc - 1
 		
 		return period
+	
+	def ACF_clip(self, y, fn, vseg, vsl, lmax, lmin):
+		"""
+		Auto correlation & clip function Pitch detection
+		:param y: enframe matrix (size: window length * frame number)
+		:param fn: frame number
+		:param vseg: vad
+		:param vsl: vad
+		:param lmax: min pitch period
+		:param lmin: max pitch period
+		:return period: pitch period
+		"""
+		pn = y.shape[1]
+		if pn != fn:
+			y = y.T
+		wlen = y.shape[0]  # frame length
+		period = np.zeros(fn)  # pitch period
+		
+		for i in range(vsl):  # only for voice segment
+			ixb = vseg['begin'][i]  # segment begin index
+			ixe = vseg['end'][i]  # segment end index
+			ixd = ixe - ixb + 1  # segment duration
+			for k in range(ixd):
+				u = y[:, k + ixb - 1]  # one frame data
+				rate = 0.7                      # clip parameter
+				CL = np.max(u) * rate           # threshold
+				for j in range(wlen):
+					if u[j] > CL:
+						u[j] = u[j] - CL
+					elif u[j] <= (-CL):
+						u[j] = u[j] + CL
+					else:
+						u[j] =0
+				u = u / np.max(u)  # normalization
+				ru, _ = xcorr(u, norm='coeff')
+				ru = ru[wlen: 2 * wlen - 1]
+				tloc = np.argmax(ru[lmin: lmax])  # find max in [lmin : lmax]
+				period[k + ixb - 1] = lmin + tloc - 1
+		
+		return period
