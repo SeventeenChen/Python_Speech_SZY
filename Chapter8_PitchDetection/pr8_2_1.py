@@ -15,7 +15,7 @@ if __name__ == '__main__':
 	speech = Speech()
 	x, fs = speech.audioread(filename, 8000)
 	x = x - np.mean(x)  # DC
-	x = x / np.max(x)  # normalized
+	x = x / np.max(np.abs(x))  # normalized
 	N = len(x)
 	time = np.arange(N) / fs
 	wnd = np.hamming(wlen)  # window function
@@ -40,7 +40,7 @@ if __name__ == '__main__':
 			period[k] = Lc[k] + lmin - 1                # pitch period
 	
 	# figure
-	plt.figure(figsize=(9, 16))
+	plt.figure(figsize=(16, 9))
 	plt.subplot(2, 1, 1)
 	plt.plot(time, x)
 	plt.xlabel('Time [s]')
