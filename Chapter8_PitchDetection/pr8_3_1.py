@@ -2,43 +2,10 @@
 # pr8_3_1
 
 from scipy.signal import lfilter
-from spectrum import xcorr
 
 from Pitch import *
 from Universal import *
 
-
-def ACF_corr(y, fn, vseg, vsl, lmax, lmin):
-	"""
-	Auto correlation function Pitch detection
-	:param y: enframe matrix (size: window length * frame number)
-	:param fn: frame number
-	:param vseg: vad
-	:param vsl: vad
-	:param lmax: min pitch period
-	:param lmin: max pitch period
-	:return period: pitch period
-	"""
-	pn = y.shape[1]
-	if pn != fn:
-		y = y.T
-	wlen = y.shape[0]                   # frame length
-	period = np.zeros(fn)               # pitch period
-	
-	for i in range(vsl):                # only for voice segment
-		ixb = vseg['begin'][i]          # segment begin index
-		ixe = vseg['end'][i]            # segment end index
-		ixd = ixe - ixb + 1             # segment duration
-		for k in range(ixd):
-			u = y[:, k + ixb - 1]       # one frame data
-			ru, _ = xcorr(u,  norm='coeff')
-			ru = ru[wlen: 2 * wlen -1]
-			tloc = np.argmax(ru[lmin: lmax])  # find max in [lmin : lmax]
-			period[k + ixb - 1] = lmin + tloc - 1
-	
-	return period
-	
-	
 if __name__ == '__main__':
 	# Set_II
 	filename = 'tone4.wav'
@@ -69,7 +36,7 @@ if __name__ == '__main__':
 	# period = np.zeros(fn)                       # pitch period initialization
 	# auto correlation pitch detection
 	pitch = Pitch()
-	period = ACF_corr(yy, fn, voiceseg, vosl, lmax, lmin)
+	period = pitch.ACF_corr(yy, fn, voiceseg, vosl, lmax, lmin)
 	T0 = pitch.pitfilterm1(period, voiceseg, vosl)
 	
 	# figure
