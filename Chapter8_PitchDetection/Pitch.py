@@ -249,3 +249,50 @@ class Pitch:
 				period[k + ixb - 1] = T0
 		
 		return period
+	
+	def CAMDF(self, y, fn, vseg, vsl, lmax, lmin):
+		"""
+		circular average magnitude difference function --> pitch detection
+		:param y: enframe matrix (size: window length * frame number)
+		:param fn: frame number
+		:param vseg: vad
+		:param vsl: vad
+		:param lmax: min pitch period
+		:param lmin: max pitch period
+		:return period: pitch period
+		"""
+		
+		pn = y.shape[1]
+		if pn != fn:
+			y = y.T
+		wlen = y.shape[0]  # frame length
+		period = np.zeros(fn)  # pitch period
+		
+		for i in range(vsl):  # only for voice segment
+			ixb = vseg['begin'][i]  # segment begin index
+			ixe = vseg['end'][i]  # segment end index
+			ixd = ixe - ixb + 1  # segment duration
+			R = np.zeros(wlen)  # circular average magnitude difference
+			for k in range(ixd):
+				u = y[:, k + ixb - 1]  # one frame data
+				for m in range(wlen - 1):
+					R[m + 1] = 0
+					for n in range(wlen - 1):  # circular average magnitude difference
+						R[m + 1] = R[m + 1] + np.abs(u[(m + n) % wlen] - u[n + 1])
+				Rmax = max(R)
+				Rth = 0.6 * Rmax  # threshold
+				Rm = np.where(R[lmin: lmax] <= Rth)  # find range < threshold in [Pmin, Pmax]
+				Rm = Rm[0]
+				if Rm.size == 0:
+					T0 = 0
+				else:
+					m11 = Rm[0]
+					m22 = lmax
+					T = np.argmin(R[m11:m22])
+					if not T:
+						T0 = 0
+					else:
+						T0 = T + m11 - 1  # valley point in min
+					period[k + ixb - 1] = T0
+		
+		return period
