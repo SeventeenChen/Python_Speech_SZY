@@ -36,7 +36,7 @@ if __name__ == '__main__':
 	# period = np.zeros(fn)                       # pitch period initialization
 	# auto correlation pitch detection
 	pitch = Pitch()
-	period = pitch.AMDF_mod(yy, fn, voiceseg, vosl, lmax, lmin)
+	period = pitch.AMDF_1(yy, fn, voiceseg, vosl, lmax, lmin)
 	T0 = pitch.pitfilterm1(period, voiceseg, vosl)
 	
 	# figure
