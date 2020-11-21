@@ -336,3 +336,43 @@ class Pitch:
 				period[k + ixb - 1] = T0
 		
 		return period
+	
+	def ACFAMDF_corr(self, y, fn, vseg, vsl, lmax, lmin):
+		"""
+			  auto correlation function (ACF)
+		-------------------------------------------- >>> pitch detection
+		average magnitude difference function (AMDF)
+		:param y: enframe matrix (size: window length * frame number)
+		:param fn: frame number
+		:param vseg: vad
+		:param vsl: vad
+		:param lmax: min pitch period
+		:param lmin: max pitch period
+		:return period: pitch period
+		"""
+		pn = y.shape[1]
+		if pn != fn:
+			y = y.T
+		wlen = y.shape[0]  # frame length
+		period = np.zeros(fn)  # pitch period
+		
+		Acm = np.zeros(wlen)    # ACF/AMDF
+		for i in range(vsl):  # only for voice segment
+			ixb = vseg['begin'][i]  # segment begin index
+			ixe = vseg['end'][i]  # segment end index
+			ixd = ixe - ixb + 1  # segment duration
+			
+			for k in range(ixd):
+				u = y[:, k + ixb - 1]  # one frame data
+				ru, _ = xcorr(u, norm='coeff')  # auto correlation
+				ru = ru[wlen: 2 * wlen - 1]
+				R = np.zeros(wlen)  # average magnitude difference
+				for m in range(wlen):
+					R[m] = np.sum(np.abs(u[m : wlen - 1] - u[0 : wlen - m - 1]))    # AMDF
+				R = R[0 : ru.size]  # the same length as ru
+				Rindex = np.where(R)
+				Acm[Rindex] = ru[Rindex] / R[Rindex]        # ACF/AMDF
+				tloc = np.argmax(Acm[lmin: lmax])  # find max in [lmin : lmax]
+				period[k + ixb - 1] = lmin + tloc - 1
+		
+		return period
