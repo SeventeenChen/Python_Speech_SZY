@@ -1,5 +1,6 @@
 # Class Pitch Detection
 
+from pywt import dwt, upcoef
 from spectrum import xcorr
 
 from VAD import *
@@ -374,5 +375,40 @@ class Pitch:
 				Acm[Rindex] = ru[Rindex] / R[Rindex]        # ACF/AMDF
 				tloc = np.argmax(Acm[lmin: lmax])  # find max in [lmin : lmax]
 				period[k + ixb - 1] = lmin + tloc - 1
+		
+		return period
+	
+	def Wavelet_corrm1(self, y, fn, vseg, vsl, lmax, lmin):
+		"""
+		Pitch detection based on autocorrelation of
+		low frequency components of discrete wavelet transform
+		:param y: enframe matrix (size: window length * frame number)
+		:param fn: frame number
+		:param vseg: vad
+		:param vsl: vad
+		:param lmax: min pitch period
+		:param lmin: max pitch period
+		:return period: pitch period
+		"""
+		pn = y.shape[1]
+		
+		if pn != fn:
+			y = y.T                 # frame number * frame length
+		period = np.zeros(fn)       # pitch period
+		
+		for i in range(vsl):
+			ixb = vseg['begin'][i]  # segment begin index
+			ixe = vseg['end'][i]  # segment end index
+			ixd = ixe - ixb + 1  # segment duration
+			
+			for k in range(ixd):
+				u = y[:, k + ixb - 1]       # one frame
+				ca1, cd1 = dwt(u, 'db4')      # wavelet
+				a1 = upcoef('a', ca1, 'db4', 1) # reconstruction with low frequency parameter
+				ru, _ = xcorr(a1, norm = 'coeff')  # normalizaed correlation coefficient
+				aL = len(a1)
+				ru = ru[aL:]
+				tloc = np.argmax(ru[lmin : lmax])
+				period[k + ixb] = lmin + tloc - 1
 		
 		return period
