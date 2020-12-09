@@ -2,7 +2,6 @@
 # pr8_7_1
 
 from scipy.signal import lfilter
-
 from Noisy import *
 from Pitch import *
 from Universal import *
