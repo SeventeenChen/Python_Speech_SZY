@@ -73,7 +73,6 @@ if __name__ == '__main__':
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
 	plt.title('Noisy Speech Siganl')
-	plt.axis([0, np.max(time), -1, 1])
 	
 	plt.subplot(6, 1, 3)
 	plt.plot(time, output)
@@ -94,7 +93,6 @@ if __name__ == '__main__':
 		# print('nx1 = {}, nx2 = {}, nx3 = {} \n'.format(nx1, nx2, nx3))
 		plt.plot(np.array([frameTime[nx1], frameTime[nx1]]), np.array([-1, 1]), 'k', linewidth=1)
 		plt.plot(np.array([frameTime[nx2], frameTime[nx2]]), np.array([-1, 1]), 'k--', linewidth=1)
-	
 	plt.xlabel('Time [s]')
 	plt.ylabel('Amplitude')
 	plt.title('Energy Entropy Ratio')
