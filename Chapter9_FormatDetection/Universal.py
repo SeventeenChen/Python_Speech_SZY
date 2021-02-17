@@ -129,7 +129,7 @@ class Speech:
             Spec = np.concatenate((Spec, np.flipud(np.conj(Spec[1::-1, :]))))  # negative frequency
         else:
             Spec = np.concatenate((Spec, np.flipud(np.conj(Spec[1:(len(Spec) - 1), :]))))  # negative frequency
-    
+
         sig = np.zeros(int((FrameNum - 1) * S + W))  # initialization
         weight = sig
         for i in range(FrameNum):  # overlap
@@ -137,9 +137,35 @@ class Speech:
             spec = Spec[:, i]  # ith frame spectrum
             sig[start: (start + W)] = sig[start: (start + W)] + np.real(np.fft.ifft(spec, W, axis=0))
         Y = sig
-    
+
         return Y
 
-
-
-
+    def stftms(self, x, win, nfft, inc):
+        """
+		short time fourier transform
+		:param x: siganl
+		:param win: window function or frame length(default 'hanning')
+		:param nfft: FFT number
+		:param inc: frame shift
+		:return d: STFT (win x frame number) just positive frequency
+		"""
+    
+        if len([win]) == 1:
+            wlen = win
+            win = np.hanning(wlen)
+        else:
+            wlen = len(win)
+    
+        x = x.reshape(-1, 1)
+        win = win.reshape(-1, 1)
+        s = len(x)
+        c = 0
+        d = np.zeros((1 + int(nfft / 2), int(1 + np.fix((s - wlen) / inc))), dtype=complex)
+    
+        for b in np.arange(0, (s - wlen), inc):
+            u = win * x[b: (b + wlen)]
+            t = np.fft.fft(u, n=nfft, axis=0).squeeze()
+            d[:, c] = t[0: int(nfft / 2 + 1)]
+            c = c + 1
+    
+        return d
