@@ -10,9 +10,9 @@
 
 # 目录
 
-# Chapter 02
+## <details> <summary>Chapter 02/summary>
 
-## 2.1.0 [短时平均幅度](./Chapter2_TimeFrequency_ShortTime/pr2_3_0.py)
+##  <pre><code> 2.1.0  [短时平均幅度](./Chapter2_TimeFrequency_ShortTime/pr2_3_0.py) </code></pre> </details>
 
 # Reference
 https://github.com/lingr7/Matlab-speech-signal-analysis-and-synthesis  
