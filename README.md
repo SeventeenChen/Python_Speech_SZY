@@ -15,7 +15,8 @@
 <a href ="./Chapter2_TimeFrequency_ShortTime/pr2_3_1.py"> 2.3.1 语音信号的短时能量</a> <br> 
 <a href ="./Chapter2_TimeFrequency_ShortTime/pr2_3_2.py"> 2.3.2 语音信号的短时平均过零率</a> <br> 
 <a href ="./Chapter2_TimeFrequency_ShortTime/pr2_3_2_librosa.py"> 2.3.2 语音信号的短时平均过零率（librosa）</a> <br> 
-<a href ="./Chapter2_TimeFrequency_ShortTime/pr2_3_3.py"> 2.3.2 语音信号的短时自相关</a> <br> 
+<a href ="./Chapter2_TimeFrequency_ShortTime/pr2_3_3.py"> 2.3.3 语音信号的短时自相关</a> <br>
+<a href ="./Chapter2_TimeFrequency_ShortTime/pr2_3_4.py"> 2.3.4 语音信号的短时平均幅度差</a> <br> 
 </details>
 
 # For any question, please don't hestiate to contact me!
